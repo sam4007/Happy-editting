@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern theme-aware scrollbar styles */
+.modern-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.4) transparent;
+}
+
+.modern-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modern-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+}
+
+.modern-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(156, 163, 175, 0.4) 0%, rgba(156, 163, 175, 0.6) 100%);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+    transition: all 0.3s ease;
+}
+
+.modern-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.6) 0%, rgba(99, 102, 241, 0.8) 100%);
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.3);
+}
+
+.modern-scrollbar::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, rgba(99, 102, 241, 0.8) 0%, rgba(99, 102, 241, 1) 100%);
+}
+
+/* Dark mode scrollbar */
+.dark .modern-scrollbar {
+    scrollbar-color: rgba(75, 85, 99, 0.6) transparent;
+}
+
+.dark .modern-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(75, 85, 99, 0.5) 0%, rgba(75, 85, 99, 0.7) 100%);
+}
+
+.dark .modern-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.6) 0%, rgba(139, 92, 246, 0.8) 100%);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
+}
+
+.dark .modern-scrollbar::-webkit-scrollbar-thumb:active {
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.8) 0%, rgba(139, 92, 246, 1) 100%);
+}
+
+/* Smooth scrollbar for course layout */
+.course-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.4) transparent;
+}
+
+.course-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.course-scrollbar::-webkit-scrollbar-track {
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 8px;
+}
+
+.course-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.5) 0%, rgba(139, 92, 246, 0.7) 100%);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.course-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.7) 0%, rgba(139, 92, 246, 0.9) 100%);
+    box-shadow: 0 0 8px rgba(139, 92, 246, 0.3);
+}
+
+@layer base {
+    html {
+        font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    * {
+        box-sizing: border-box;
+    }
+}
+
+@layer components {
+    .glass-morphism {
+        background: rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+
+    .dark .glass-morphism {
+        background: rgba(30, 30, 30, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .gradient-bg {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    .card-shadow {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .card-shadow-hover {
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+}
+
+@layer utilities {
+    .text-gradient {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+}
