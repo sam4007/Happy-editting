@@ -17,7 +17,6 @@ export const VideoProvider = ({ children }) => {
     const { user } = useAuth()
     const [videos, setVideos] = useState([])
     const [categories, setCategories] = useState(['All', 'Programming', 'Mathematics', 'Science', 'Language', 'Business', 'Video Editing'])
-    const [searchQuery, setSearchQuery] = useState('')
     const [selectedCategory, setSelectedCategory] = useState('All')
     const [favorites, setFavorites] = useState([])
     const [watchHistory, setWatchHistory] = useState([])
@@ -125,7 +124,6 @@ export const VideoProvider = ({ children }) => {
         setDailyActivity({})
         setCategories(['All', 'Programming', 'Mathematics', 'Science', 'Language', 'Business', 'Video Editing'])
         setSelectedCategory('All')
-        setSearchQuery('')
         setIsInitialized(false)
     }
 
@@ -714,23 +712,13 @@ export const VideoProvider = ({ children }) => {
     }
 
     const filteredVideos = videos.filter(video => {
-        const searchLower = searchQuery.toLowerCase()
-        const matchesSearch = searchQuery === '' || 
-            video.title.toLowerCase().includes(searchLower) ||
-            video.instructor.toLowerCase().includes(searchLower) ||
-            video.description.toLowerCase().includes(searchLower) ||
-            video.category.toLowerCase().includes(searchLower) ||
-            (video.tags && video.tags.some(tag => tag.toLowerCase().includes(searchLower))) ||
-            (video.playlistTitle && video.playlistTitle.toLowerCase().includes(searchLower))
         const matchesCategory = selectedCategory === 'All' || video.category === selectedCategory
-        return matchesSearch && matchesCategory
+        return matchesCategory
     })
 
     const value = {
         videos,
         categories,
-        searchQuery,
-        setSearchQuery,
         selectedCategory,
         setSelectedCategory,
         favorites,
