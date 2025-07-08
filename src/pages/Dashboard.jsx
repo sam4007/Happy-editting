@@ -11,7 +11,6 @@ import {
     Award,
     ArrowRight,
     Download,
-    Calendar,
     Timer,
     PlayCircle
 } from 'lucide-react'
@@ -73,75 +72,6 @@ const Dashboard = () => {
     const watchTimeDisplay = happyEdittingVideos.length > 0
         ? `${formatDuration(completedCourseDuration)} / ${formatDuration(totalCourseDuration)}`
         : `${Math.round(videos.reduce((acc, video) => acc + durationToMinutes(video.duration), 0) / 60)}h`
-
-    // Calculate estimated completion time
-    const calculateCompletionTime = () => {
-        if (happyEdittingVideos.length === 0) {
-            return { display: "No course", subtitle: "Import a course to see estimates" }
-        }
-
-        const totalVideos = happyEdittingVideos.length
-        const completedCount = happyEdittingVideos.filter(v => v.completed).length
-        const remainingVideos = totalVideos - completedCount
-        const courseProgressPercentage = (completedCourseDuration / totalCourseDuration) * 100
-
-        if (completedCount === 0) {
-            return { display: "Just started", subtitle: "Complete some lessons for estimates" }
-        }
-
-        if (remainingVideos === 0) {
-            return { display: "Completed! 🎉", subtitle: "Course finished" }
-        }
-
-        // Estimate learning rate based on current progress
-        // Assume different scenarios based on completion rate
-        let estimatedDaysPerVideo;
-
-        if (courseProgressPercentage >= 50) {
-            // Advanced learner - faster pace
-            estimatedDaysPerVideo = 1.5
-        } else if (courseProgressPercentage >= 25) {
-            // Regular learner
-            estimatedDaysPerVideo = 2
-        } else if (courseProgressPercentage >= 10) {
-            // Slower pace
-            estimatedDaysPerVideo = 3
-        } else {
-            // Just getting started - conservative estimate
-            estimatedDaysPerVideo = 4
-        }
-
-        // Calculate days to complete remaining videos
-        const daysToComplete = Math.ceil(remainingVideos * estimatedDaysPerVideo)
-
-        // Format the time estimate
-        if (daysToComplete <= 7) {
-            return {
-                display: `${daysToComplete} days`,
-                subtitle: `${remainingVideos} lessons remaining`
-            }
-        } else if (daysToComplete <= 30) {
-            const weeks = Math.ceil(daysToComplete / 7)
-            return {
-                display: `${weeks} week${weeks > 1 ? 's' : ''}`,
-                subtitle: `${remainingVideos} lessons remaining`
-            }
-        } else if (daysToComplete <= 365) {
-            const months = Math.ceil(daysToComplete / 30)
-            return {
-                display: `${months} month${months > 1 ? 's' : ''}`,
-                subtitle: `${remainingVideos} lessons remaining`
-            }
-        } else {
-            const years = Math.ceil(daysToComplete / 365)
-            return {
-                display: `${years} year${years > 1 ? 's' : ''}`,
-                subtitle: "Consider studying more frequently"
-            }
-        }
-    }
-
-    const completionEstimate = calculateCompletionTime()
 
     // Continue Learning Logic
     const getContinueLearningVideo = () => {
@@ -237,13 +167,6 @@ const Dashboard = () => {
             change: happyEdittingVideos.length > 0 ?
                 `${Math.round((completedCourseDuration / totalCourseDuration) * 100)}% completed` :
                 '+15% from last week'
-        },
-        {
-            title: 'Time to Complete',
-            value: completionEstimate.display,
-            icon: Calendar,
-            color: 'bg-orange-500',
-            change: completionEstimate.subtitle
         }
     ]
 
@@ -261,7 +184,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     {stats.map((stat, index) => (
                         <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                             <div className="flex items-center justify-between mb-4">
