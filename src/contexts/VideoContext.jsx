@@ -23,6 +23,7 @@ export const VideoProvider = ({ children }) => {
     const [notes, setNotes] = useState({})
     const [bookmarks, setBookmarks] = useState({})
     const [dailyActivity, setDailyActivity] = useState({})
+    const [dailyCompletedVideos, setDailyCompletedVideos] = useState({})
     const [isInitialized, setIsInitialized] = useState(false)
 
     // Calculate user stats from current video data
@@ -122,6 +123,7 @@ export const VideoProvider = ({ children }) => {
         setNotes({})
         setBookmarks({})
         setDailyActivity({})
+        setDailyCompletedVideos({})
         setCategories(['All', 'Programming', 'Mathematics', 'Science', 'Language', 'Business', 'Video Editing'])
         setSelectedCategory('All')
         setIsInitialized(false)
@@ -153,6 +155,7 @@ export const VideoProvider = ({ children }) => {
         const savedNotes = localStorage.getItem(getStorageKey('notes'))
         const savedBookmarks = localStorage.getItem(getStorageKey('bookmarks'))
         const savedDailyActivity = localStorage.getItem(getStorageKey('dailyActivity'))
+        const savedDailyCompletedVideos = localStorage.getItem(getStorageKey('dailyCompletedVideos'))
 
         if (savedVideos) {
             console.log(`📺 Loading videos for user ${user?.uid}:`, JSON.parse(savedVideos).length, 'videos')
@@ -283,6 +286,12 @@ export const VideoProvider = ({ children }) => {
             setDailyActivity({})
         }
 
+        if (savedDailyCompletedVideos) {
+            setDailyCompletedVideos(JSON.parse(savedDailyCompletedVideos))
+        } else {
+            setDailyCompletedVideos({})
+        }
+
         // Set initialized to true after loading
         setIsInitialized(true)
         console.log(`✅ VideoContext initialized for user ${user?.uid || 'guest'}`)
@@ -326,6 +335,11 @@ export const VideoProvider = ({ children }) => {
         if (!isInitialized || !user) return
         localStorage.setItem(getStorageKey('dailyActivity'), JSON.stringify(dailyActivity))
     }, [dailyActivity, isInitialized, user])
+
+    useEffect(() => {
+        if (!isInitialized || !user) return
+        localStorage.setItem(getStorageKey('dailyCompletedVideos'), JSON.stringify(dailyCompletedVideos))
+    }, [dailyCompletedVideos, isInitialized, user])
 
     useEffect(() => {
         if (!isInitialized || !user) return
@@ -401,13 +415,36 @@ export const VideoProvider = ({ children }) => {
         })
     }
 
+    const trackCompletedVideo = (videoId) => {
+        const today = new Date().toISOString().split('T')[0] // YYYY-MM-DD format
+        setDailyCompletedVideos(prev => {
+            const currentVideos = prev[today] || []
+            // Only add if video isn't already in today's completed list
+            if (!currentVideos.includes(videoId)) {
+                const newVideos = [...currentVideos, videoId]
+                console.log(`✅ Video completed today: ${videoId} - Total: ${newVideos.length}`)
+                return {
+                    ...prev,
+                    [today]: newVideos
+                }
+            }
+            return prev
+        })
+    }
+
     const updateVideo = (id, updates) => {
         setVideos(prev => {
+            const oldVideo = prev.find(video => video.id === id)
             const updatedVideos = prev.map(video =>
                 video.id === id ? { ...video, ...updates } : video
             )
 
             console.log(`📹 Video updated: ${id}`, updates)
+
+            // Track completed video if it's newly completed
+            if (updates.completed && !oldVideo?.completed) {
+                trackCompletedVideo(id)
+            }
 
             // Track activity when video is completed or progress is made
             if (updates.completed || updates.progress) {
@@ -726,6 +763,7 @@ export const VideoProvider = ({ children }) => {
         notes,
         bookmarks,
         dailyActivity,
+        dailyCompletedVideos,
         filteredVideos,
         addVideo,
         addBulkVideos,

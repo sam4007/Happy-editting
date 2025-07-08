@@ -218,7 +218,7 @@ const Dashboard = () => {
 
                     {/* Right Column - Weekly Streak Board */}
                     <div className="xl:col-span-2">
-                        <WeeklyStreakBoard dailyActivity={displayActivity} />
+                        <WeeklyStreakBoard />
                     </div>
                 </div>
 
