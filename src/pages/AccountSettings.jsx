@@ -1,10 +1,10 @@
 import React, { useState } from 'react'
-import { Shield, Lock, Mail, Eye, EyeOff, Key, AlertTriangle, Check, AlertCircle, Trash2, Clock, MapPin, Monitor, Smartphone, Save, Send } from 'lucide-react'
+import { Shield, Lock, Mail, Eye, EyeOff, Key, AlertTriangle, Check, AlertCircle, Trash2, User, Save, Send } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNotifications } from '../contexts/NotificationContext'
 
 const AccountSettings = () => {
-    const { user, resetPassword, logout } = useAuth()
+    const { user, resetPassword, logout, updateUserPassword, sendVerificationEmail, deleteAccount } = useAuth()
     const { addNotification } = useNotifications()
 
     const [passwordData, setPasswordData] = useState({
@@ -17,41 +17,12 @@ const AccountSettings = () => {
         new: false,
         confirm: false
     })
-    const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
-    const [emailNotifications, setEmailNotifications] = useState(true)
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
     const [deleteConfirmText, setDeleteConfirmText] = useState('')
+    const [deletePassword, setDeletePassword] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [success, setSuccess] = useState('')
     const [error, setError] = useState('')
-
-    // Mock login history data
-    const loginHistory = [
-        {
-            id: 1,
-            device: 'Chrome on Windows',
-            location: 'New York, NY',
-            ipAddress: '192.168.1.100',
-            date: '2024-01-15T10:30:00Z',
-            current: true
-        },
-        {
-            id: 2,
-            device: 'Safari on iPhone',
-            location: 'New York, NY',
-            ipAddress: '192.168.1.101',
-            date: '2024-01-14T15:45:00Z',
-            current: false
-        },
-        {
-            id: 3,
-            device: 'Firefox on MacOS',
-            location: 'San Francisco, CA',
-            ipAddress: '10.0.0.50',
-            date: '2024-01-13T09:15:00Z',
-            current: false
-        }
-    ]
 
     const handlePasswordChange = (e) => {
         const { name, value } = e.target
@@ -79,9 +50,7 @@ const AccountSettings = () => {
         }
 
         try {
-            // Here you would typically update the password
-            // For now, we'll simulate the process
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            await updateUserPassword(passwordData.currentPassword, passwordData.newPassword)
 
             setSuccess('Password updated successfully!')
             setPasswordData({
@@ -98,7 +67,7 @@ const AccountSettings = () => {
             })
 
         } catch (error) {
-            setError('Failed to update password. Please try again.')
+            setError(error.message || 'Failed to update password. Please try again.')
         } finally {
             setIsLoading(false)
         }
@@ -110,8 +79,7 @@ const AccountSettings = () => {
         setSuccess('')
 
         try {
-            // Here you would send email verification
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            await sendVerificationEmail()
             setSuccess('Verification email sent! Please check your inbox.')
 
             addNotification({
@@ -122,7 +90,7 @@ const AccountSettings = () => {
             })
 
         } catch (error) {
-            setError('Failed to send verification email. Please try again.')
+            setError(error.message || 'Failed to send verification email. Please try again.')
         } finally {
             setIsLoading(false)
         }
@@ -151,19 +119,14 @@ const AccountSettings = () => {
         }
     }
 
-    const handleToggleTwoFactor = () => {
-        setTwoFactorEnabled(!twoFactorEnabled)
-        addNotification({
-            type: 'security',
-            title: twoFactorEnabled ? '2FA Disabled' : '2FA Enabled',
-            message: `Two-factor authentication has been ${twoFactorEnabled ? 'disabled' : 'enabled'}.`,
-            icon: '🔐'
-        })
-    }
-
     const handleDeleteAccount = async () => {
         if (deleteConfirmText !== 'DELETE') {
             setError('Please type "DELETE" to confirm account deletion')
+            return
+        }
+
+        if (!deletePassword) {
+            setError('Please enter your password to confirm account deletion')
             return
         }
 
@@ -171,23 +134,22 @@ const AccountSettings = () => {
         setError('')
 
         try {
-            // Here you would delete the account
-            await new Promise(resolve => setTimeout(resolve, 2000))
+            await deleteAccount(deletePassword)
 
             addNotification({
                 type: 'security',
                 title: 'Account Deleted',
-                message: 'Your account has been scheduled for deletion.',
+                message: 'Your account has been successfully deleted.',
                 icon: '🗑️'
             })
 
             // Logout user after account deletion
             setTimeout(() => {
                 logout()
-            }, 3000)
+            }, 1000)
 
         } catch (error) {
-            setError('Failed to delete account. Please try again.')
+            setError(error.message || 'Failed to delete account. Please try again.')
         } finally {
             setIsLoading(false)
         }
@@ -201,13 +163,6 @@ const AccountSettings = () => {
             hour: '2-digit',
             minute: '2-digit'
         })
-    }
-
-    const getDeviceIcon = (device) => {
-        if (device.includes('iPhone') || device.includes('Android')) {
-            return <Smartphone className="w-5 h-5" />
-        }
-        return <Monitor className="w-5 h-5" />
     }
 
     return (
@@ -245,6 +200,63 @@ const AccountSettings = () => {
                     <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
                 </div>
             )}
+
+            {/* Account Information */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                    <User className="w-5 h-5 mr-2 text-blue-500" />
+                    Account Information
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email</label>
+                        <div className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                            {user?.email || 'Not available'}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Display Name</label>
+                        <div className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                            {user?.displayName || 'Not set'}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Account Created</label>
+                        <div className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                            {user?.metadata?.creationTime ? formatDate(user.metadata.creationTime) : 'Not available'}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Last Sign In</label>
+                        <div className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                            {user?.metadata?.lastSignInTime ? formatDate(user.metadata.lastSignInTime) : 'Not available'}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">User ID</label>
+                        <div className="text-sm text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg font-mono">
+                            {user?.uid || 'Not available'}
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Verified</label>
+                        <div className="text-sm bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                            <div className="flex items-center space-x-2">
+                                <div className={`w-2 h-2 rounded-full ${user?.emailVerified ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                                <span className={user?.emailVerified ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                    {user?.emailVerified ? 'Verified' : 'Not Verified'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* Email Verification Status */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
@@ -382,84 +394,6 @@ const AccountSettings = () => {
                 </form>
             </div>
 
-            {/* Two-Factor Authentication */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <Shield className="w-5 h-5 mr-2 text-green-500" />
-                    Two-Factor Authentication
-                </h2>
-
-                <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                            Add an extra layer of security to your account by enabling two-factor authentication.
-                        </p>
-                        <div className="flex items-center space-x-2">
-                            <div className={`w-3 h-3 rounded-full ${twoFactorEnabled ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                            <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                {twoFactorEnabled ? 'Enabled' : 'Disabled'}
-                            </span>
-                        </div>
-                    </div>
-
-                    <label className="relative inline-flex items-center cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={twoFactorEnabled}
-                            onChange={handleToggleTwoFactor}
-                            className="sr-only peer"
-                        />
-                        <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-                    </label>
-                </div>
-            </div>
-
-            {/* Login History */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <Clock className="w-5 h-5 mr-2 text-purple-500" />
-                    Login History
-                </h2>
-
-                <div className="space-y-4">
-                    {loginHistory.map((login) => (
-                        <div key={login.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <div className="flex items-center space-x-4">
-                                <div className="text-gray-400">
-                                    {getDeviceIcon(login.device)}
-                                </div>
-                                <div>
-                                    <div className="flex items-center space-x-2">
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                            {login.device}
-                                        </span>
-                                        {login.current && (
-                                            <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-full">
-                                                Current
-                                            </span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center space-x-4 mt-1">
-                                        <div className="flex items-center space-x-1 text-xs text-gray-500 dark:text-gray-400">
-                                            <MapPin className="w-3 h-3" />
-                                            <span>{login.location}</span>
-                                        </div>
-                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                            {login.ipAddress}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="text-right">
-                                <div className="text-sm text-gray-900 dark:text-white">
-                                    {formatDate(login.date)}
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
             {/* Delete Account */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-red-200 dark:border-red-800 p-6">
                 <h2 className="text-lg font-semibold text-red-600 dark:text-red-400 mb-4 flex items-center">
@@ -483,20 +417,36 @@ const AccountSettings = () => {
                     </button>
                 ) : (
                     <div className="space-y-4">
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Please type <strong>DELETE</strong> to confirm account deletion:
-                        </p>
-                        <input
-                            type="text"
-                            value={deleteConfirmText}
-                            onChange={(e) => setDeleteConfirmText(e.target.value)}
-                            placeholder="Type DELETE to confirm"
-                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                        />
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                Please type <strong>DELETE</strong> to confirm account deletion:
+                            </p>
+                            <input
+                                type="text"
+                                value={deleteConfirmText}
+                                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                                placeholder="Type DELETE to confirm"
+                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            />
+                        </div>
+
+                        <div>
+                            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                Enter your password to confirm:
+                            </p>
+                            <input
+                                type="password"
+                                value={deletePassword}
+                                onChange={(e) => setDeletePassword(e.target.value)}
+                                placeholder="Enter your password"
+                                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            />
+                        </div>
+
                         <div className="flex items-center space-x-4">
                             <button
                                 onClick={handleDeleteAccount}
-                                disabled={isLoading || deleteConfirmText !== 'DELETE'}
+                                disabled={isLoading || deleteConfirmText !== 'DELETE' || !deletePassword}
                                 className="flex items-center space-x-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <Trash2 className="w-4 h-4" />
@@ -506,6 +456,7 @@ const AccountSettings = () => {
                                 onClick={() => {
                                     setShowDeleteConfirm(false)
                                     setDeleteConfirmText('')
+                                    setDeletePassword('')
                                 }}
                                 className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors"
                             >

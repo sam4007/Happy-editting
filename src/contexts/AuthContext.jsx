@@ -7,9 +7,13 @@ import {
     onAuthStateChanged,
     updateProfile,
     sendPasswordResetEmail,
-    sendEmailVerification
+    sendEmailVerification,
+    updatePassword,
+    reauthenticateWithCredential,
+    EmailAuthProvider,
+    deleteUser
 } from 'firebase/auth'
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore'
+import { doc, setDoc, getDoc, serverTimestamp, deleteDoc } from 'firebase/firestore'
 import { auth, googleProvider, db } from '../config/firebase'
 
 const AuthContext = createContext()
@@ -194,6 +198,7 @@ export const AuthProvider = ({ children }) => {
             console.log('✅ Profile data saved to Firestore')
         } catch (error) {
             console.error('❌ Error saving profile data:', error)
+            setError(error.message)
             throw error
         }
     }
@@ -210,11 +215,81 @@ export const AuthProvider = ({ children }) => {
             if (userSnap.exists()) {
                 return userSnap.data()
             } else {
-                console.log('No user document found')
-                return null
+                throw new Error('User document not found')
             }
         } catch (error) {
-            console.error('❌ Error getting profile data:', error)
+            console.error('❌ Error getting user profile data:', error)
+            setError(error.message)
+            throw error
+        }
+    }
+
+    // Update user password
+    const updateUserPassword = async (currentPassword, newPassword) => {
+        try {
+            setError(null)
+
+            if (!auth.currentUser) throw new Error('No authenticated user')
+
+            // Re-authenticate the user first
+            const credential = EmailAuthProvider.credential(
+                auth.currentUser.email,
+                currentPassword
+            )
+
+            await reauthenticateWithCredential(auth.currentUser, credential)
+
+            // Update password
+            await updatePassword(auth.currentUser, newPassword)
+
+            console.log('✅ Password updated successfully')
+        } catch (error) {
+            setError(error.message)
+            throw error
+        }
+    }
+
+    // Send email verification
+    const sendVerificationEmail = async () => {
+        try {
+            setError(null)
+
+            if (!auth.currentUser) throw new Error('No authenticated user')
+
+            await sendEmailVerification(auth.currentUser)
+
+            console.log('✅ Verification email sent')
+        } catch (error) {
+            setError(error.message)
+            throw error
+        }
+    }
+
+    // Delete user account
+    const deleteAccount = async (password) => {
+        try {
+            setError(null)
+
+            if (!auth.currentUser) throw new Error('No authenticated user')
+
+            // Re-authenticate the user before deleting account
+            const credential = EmailAuthProvider.credential(
+                auth.currentUser.email,
+                password
+            )
+
+            await reauthenticateWithCredential(auth.currentUser, credential)
+
+            // Delete user document from Firestore
+            const userRef = doc(db, 'users', auth.currentUser.uid)
+            await deleteDoc(userRef)
+
+            // Delete user authentication account
+            await deleteUser(auth.currentUser)
+
+            console.log('✅ Account deleted successfully')
+        } catch (error) {
+            setError(error.message)
             throw error
         }
     }
@@ -251,6 +326,9 @@ export const AuthProvider = ({ children }) => {
         updateUserProfile,
         saveProfileData,
         getUserProfileData,
+        updateUserPassword,
+        sendVerificationEmail,
+        deleteAccount,
         clearError
     }
 
