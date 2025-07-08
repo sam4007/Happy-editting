@@ -714,9 +714,14 @@ export const VideoProvider = ({ children }) => {
     }
 
     const filteredVideos = videos.filter(video => {
-        const matchesSearch = video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            video.instructor.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            video.description.toLowerCase().includes(searchQuery.toLowerCase())
+        const searchLower = searchQuery.toLowerCase()
+        const matchesSearch = searchQuery === '' || 
+            video.title.toLowerCase().includes(searchLower) ||
+            video.instructor.toLowerCase().includes(searchLower) ||
+            video.description.toLowerCase().includes(searchLower) ||
+            video.category.toLowerCase().includes(searchLower) ||
+            (video.tags && video.tags.some(tag => tag.toLowerCase().includes(searchLower))) ||
+            (video.playlistTitle && video.playlistTitle.toLowerCase().includes(searchLower))
         const matchesCategory = selectedCategory === 'All' || video.category === selectedCategory
         return matchesSearch && matchesCategory
     })
