@@ -129,4 +129,48 @@
     .scrollbar-hide::-webkit-scrollbar {
         display: none;
     }
+
+    /* Prevent horizontal overflow and improve text wrapping */
+    .no-overflow {
+        max-width: 100%;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+        word-break: break-word;
+        hyphens: auto;
+    }
+
+    /* Force text to wrap and prevent container expansion */
+    .force-text-wrap {
+        word-break: break-all;
+        overflow-wrap: anywhere;
+        line-break: anywhere;
+    }
+
+    /* Ensure containers never exceed viewport width */
+    .viewport-constrained {
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+
+    /* Custom line-clamp utilities */
+    .line-clamp-1 {
+        display: -webkit-box;
+        -webkit-line-clamp: 1;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
 }
