@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
     TrendingUp,
@@ -12,7 +12,9 @@ import {
     ArrowRight,
     Download,
     Timer,
-    PlayCircle
+    PlayCircle,
+    ChevronLeft,
+    ChevronRight
 } from 'lucide-react'
 import { useVideo } from '../contexts/VideoContext'
 import VideoCard from '../components/VideoCard'
@@ -26,40 +28,161 @@ const Dashboard = () => {
     const { videos, favorites, watchHistory, dailyActivity } = useVideo()
     const [showAddModal, setShowAddModal] = useState(false)
     const [showCourseImporter, setShowCourseImporter] = useState(false)
+    const [currentCourseIndex, setCurrentCourseIndex] = useState(0)
+    
+    // Touch/Swipe state for mobile
+    const [touchStart, setTouchStart] = useState(null)
+    const [touchEnd, setTouchEnd] = useState(null)
+    
+    // Minimum swipe distance (in px)
+    const minSwipeDistance = 50
+
+    // Debug videos on load
+    useEffect(() => {
+        if (videos.length > 0) {
+            console.log('🔍 Dashboard: Total videos loaded:', videos.length)
+            console.log('🔍 Dashboard: Sample video data:', videos[0])
+            console.log('🔍 Dashboard: Instructors found:', [...new Set(videos.map(v => v.instructor))])
+            console.log('🔍 Dashboard: Categories found:', [...new Set(videos.map(v => v.category))])
+            console.log('🔍 Dashboard: Videos with progress > 0:', videos.filter(v => v.progress > 0).length)
+            console.log('🔍 Dashboard: Completed videos:', videos.filter(v => v.completed).length)
+        }
+    }, [videos])
 
     // Calculate statistics
     const totalVideos = videos.length
     const completedVideos = videos.filter(v => v.completed).length
 
-    // Calculate Happy Editting course progress
-    const happyEdittingVideos = videos.filter(video =>
-        video.instructor === 'Happy Editting' &&
-        video.category === 'Video Editing'
-    )
-
     // Helper function to convert duration string to minutes
     const durationToMinutes = (duration) => {
-        const [minutes, seconds] = duration.split(':').map(Number)
-        return minutes + (seconds / 60)
+        if (!duration) return 0
+        try {
+            const parts = duration.split(':').map(Number)
+            if (parts.length === 2) {
+                return parts[0] + (parts[1] / 60) // MM:SS
+            } else if (parts.length === 3) {
+                return (parts[0] * 60) + parts[1] + (parts[2] / 60) // HH:MM:SS
+            }
+            return 0
+        } catch (error) {
+            console.warn('Could not parse duration:', duration)
+            return 0
+        }
     }
 
-    // Calculate total course duration in minutes
-    const totalCourseDuration = happyEdittingVideos.reduce((acc, video) => {
-        return acc + durationToMinutes(video.duration)
-    }, 0)
+    // Get all courses/playlists from videos
+    const getAllCourses = () => {
+        const courses = []
+        
+        // Group videos by instructor first
+        const instructorGroups = {}
+        videos.forEach(video => {
+            const instructor = video.instructor || 'Unknown Instructor'
+            if (!instructorGroups[instructor]) {
+                instructorGroups[instructor] = []
+            }
+            instructorGroups[instructor].push(video)
+        })
 
-    // Calculate completed duration based on progress and completion
-    const completedCourseDuration = happyEdittingVideos.reduce((acc, video) => {
-        if (video.completed) {
-            return acc + durationToMinutes(video.duration)
-        } else if (video.progress > 0) {
-            return acc + (durationToMinutes(video.duration) * (video.progress / 100))
+        // Create course objects for each instructor group
+        Object.entries(instructorGroups).forEach(([instructor, instructorVideos]) => {
+            // Further group by category within each instructor
+            const categoryGroups = {}
+            instructorVideos.forEach(video => {
+                const category = video.category || 'General'
+                const courseKey = `${instructor} - ${category}`
+                if (!categoryGroups[courseKey]) {
+                    categoryGroups[courseKey] = []
+                }
+                categoryGroups[courseKey].push(video)
+            })
+
+            // If instructor has multiple categories, create separate courses
+            if (Object.keys(categoryGroups).length > 1) {
+                Object.entries(categoryGroups).forEach(([courseKey, categoryVideos]) => {
+                    courses.push({
+                        name: courseKey,
+                        instructor,
+                        category: courseKey.split(' - ')[1],
+                        videos: categoryVideos,
+                        videoCount: categoryVideos.length
+                    })
+                })
+            } else {
+                // Single category, use instructor name as course name
+                courses.push({
+                    name: `${instructor} Course`,
+                    instructor,
+                    category: instructorVideos[0]?.category || 'General',
+                    videos: instructorVideos,
+                    videoCount: instructorVideos.length
+                })
+            }
+        })
+
+        // Sort courses by video count (largest first)
+        courses.sort((a, b) => b.videoCount - a.videoCount)
+
+        // If no courses found, create a default "All Videos" course
+        if (courses.length === 0 && videos.length > 0) {
+            courses.push({
+                name: 'All Videos',
+                instructor: 'Mixed',
+                category: 'General',
+                videos: videos,
+                videoCount: videos.length
+            })
         }
-        return acc
-    }, 0)
+
+        console.log('📚 All Courses Found:', courses.map(c => `${c.name} (${c.videoCount} videos)`))
+        return courses
+    }
+
+    const allCourses = getAllCourses()
+    const currentCourse = allCourses[currentCourseIndex] || null
+
+    // Calculate progress for current course
+    const calculateCourseProgress = (course) => {
+        if (!course || !course.videos.length) {
+            return {
+                totalDuration: 0,
+                completedDuration: 0,
+                progressPercentage: 0,
+                completedVideos: 0,
+                totalVideos: 0
+            }
+        }
+
+        const totalDuration = course.videos.reduce((acc, video) => {
+            return acc + durationToMinutes(video.duration)
+        }, 0)
+
+        const completedDuration = course.videos.reduce((acc, video) => {
+            if (video.completed) {
+                return acc + durationToMinutes(video.duration)
+            } else if (video.progress > 0) {
+                return acc + (durationToMinutes(video.duration) * (video.progress / 100))
+            }
+            return acc
+        }, 0)
+
+        const completedVideosCount = course.videos.filter(v => v.completed).length
+        const progressPercentage = totalDuration > 0 ? Math.round((completedDuration / totalDuration) * 100) : 0
+
+        return {
+            totalDuration,
+            completedDuration,
+            progressPercentage,
+            completedVideos: completedVideosCount,
+            totalVideos: course.videos.length
+        }
+    }
+
+    const courseProgress = calculateCourseProgress(currentCourse)
 
     // Format time as hours and minutes
     const formatDuration = (totalMinutes) => {
+        if (totalMinutes < 1) return '0m'
         const hours = Math.floor(totalMinutes / 60)
         const minutes = Math.round(totalMinutes % 60)
         if (hours > 0) {
@@ -68,10 +191,50 @@ const Dashboard = () => {
         return `${minutes}m`
     }
 
-    // Create watch time display
-    const watchTimeDisplay = happyEdittingVideos.length > 0
-        ? `${formatDuration(completedCourseDuration)} / ${formatDuration(totalCourseDuration)}`
-        : `${Math.round(videos.reduce((acc, video) => acc + durationToMinutes(video.duration), 0) / 60)}h`
+    // Course navigation functions
+    const nextCourse = () => {
+        setCurrentCourseIndex((prevIndex) => 
+            prevIndex === allCourses.length - 1 ? 0 : prevIndex + 1
+        )
+    }
+
+    const prevCourse = () => {
+        setCurrentCourseIndex((prevIndex) => 
+            prevIndex === 0 ? allCourses.length - 1 : prevIndex - 1
+        )
+    }
+
+    // Touch event handlers for swipe functionality
+    const onTouchStart = (e) => {
+        setTouchEnd(null) // otherwise the swipe is fired even with usual touch events
+        setTouchStart(e.targetTouches[0].clientX)
+    }
+
+    const onTouchMove = (e) => {
+        setTouchEnd(e.targetTouches[0].clientX)
+    }
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return
+        
+        const distance = touchStart - touchEnd
+        const isLeftSwipe = distance > minSwipeDistance
+        const isRightSwipe = distance < -minSwipeDistance
+
+        if (isLeftSwipe && allCourses.length > 1) {
+            nextCourse()
+        }
+        if (isRightSwipe && allCourses.length > 1) {
+            prevCourse()
+        }
+    }
+
+    // Create watch time display for current course
+    const watchTimeDisplay = currentCourse 
+        ? `${formatDuration(courseProgress.completedDuration)} / ${formatDuration(courseProgress.totalDuration)}`
+        : '0m'
+
+    const courseProgressPercentage = currentCourse ? courseProgress.progressPercentage : 0
 
     // Continue Learning Logic
     const getContinueLearningVideo = () => {
@@ -94,16 +257,13 @@ const Dashboard = () => {
         }
 
         // Last watched video is completed, find the next video
-        // Priority 1: Next video in the same course (Happy Editting)
-        if (lastWatchedVideo.instructor === 'Happy Editting' && lastWatchedVideo.category === 'Video Editing') {
-            const courseVideos = videos
-                .filter(v => v.instructor === 'Happy Editting' && v.category === 'Video Editing')
-                .sort((a, b) => a.id - b.id) // Sort by ID to maintain order
+        // Priority 1: Next video in the same course (using mainCourse logic)
+        if (currentCourse?.videos.some(v => v.id === lastWatchedVideo.id)) {
+            const sortedCourseVideos = currentCourse.videos.sort((a, b) => a.id - b.id) // Sort by ID to maintain order
+            const currentIndex = sortedCourseVideos.findIndex(v => v.id === lastWatchedVideo.id)
 
-            const currentIndex = courseVideos.findIndex(v => v.id === lastWatchedVideo.id)
-
-            if (currentIndex !== -1 && currentIndex < courseVideos.length - 1) {
-                const nextVideo = courseVideos[currentIndex + 1]
+            if (currentIndex !== -1 && currentIndex < sortedCourseVideos.length - 1) {
+                const nextVideo = sortedCourseVideos[currentIndex + 1]
                 return nextVideo
             }
         }
@@ -158,15 +318,6 @@ const Dashboard = () => {
             icon: CheckCircle,
             color: 'bg-green-500',
             change: '+8% from last week'
-        },
-        {
-            title: happyEdittingVideos.length > 0 ? 'Course Progress' : 'Watch Time',
-            value: watchTimeDisplay,
-            icon: Clock,
-            color: 'bg-purple-500',
-            change: happyEdittingVideos.length > 0 ?
-                `${Math.round((completedCourseDuration / totalCourseDuration) * 100)}% completed` :
-                '+15% from last week'
         }
     ]
 
@@ -184,7 +335,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                     {stats.map((stat, index) => (
                         <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
                             <div className="flex items-center justify-between mb-4">
@@ -201,6 +352,130 @@ const Dashboard = () => {
                         </div>
                     ))}
                 </div>
+
+                {/* Course Progress Carousel */}
+                {allCourses.length > 0 && (
+                    <div className="mb-8">
+                        <div 
+                            className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 relative overflow-hidden cursor-grab active:cursor-grabbing"
+                            onTouchStart={onTouchStart}
+                            onTouchMove={onTouchMove}
+                            onTouchEnd={onTouchEnd}
+                        >
+                            {/* Course Navigation Header */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                                        <Clock className="w-6 h-6 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            Course Progress
+                                        </h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                            {currentCourseIndex + 1} of {allCourses.length} courses • Swipe to navigate
+                                        </p>
+                                    </div>
+                                </div>
+                                
+                                {/* Navigation Buttons */}
+                                <div className="flex items-center space-x-2">
+                                    <button
+                                        onClick={prevCourse}
+                                        className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={allCourses.length <= 1}
+                                        title="Previous course"
+                                    >
+                                        <ChevronLeft className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                    </button>
+                                    <button
+                                        onClick={nextCourse}
+                                        className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={allCourses.length <= 1}
+                                        title="Next course"
+                                    >
+                                        <ChevronRight className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Course Progress Content */}
+                            {currentCourse && (
+                                <div className="space-y-4">
+                                    {/* Course Info */}
+                                    <div>
+                                        <h4 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
+                                            {currentCourse.name}
+                                        </h4>
+                                        <div className="flex items-center space-x-4 text-sm text-gray-500 dark:text-gray-400">
+                                            <span>{currentCourse.instructor}</span>
+                                            <span>•</span>
+                                            <span>{currentCourse.category}</span>
+                                            <span>•</span>
+                                            <span>{courseProgress.totalVideos} videos</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress Stats */}
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                                {watchTimeDisplay}
+                                            </div>
+                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                Watch Time
+                                            </div>
+                                        </div>
+                                        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+                                            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+                                                {courseProgress.completedVideos}/{courseProgress.totalVideos}
+                                            </div>
+                                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                                                Videos Completed
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Progress Bar */}
+                                    <div>
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                Course Progress
+                                            </span>
+                                            <span className="text-sm font-medium text-purple-600 dark:text-purple-400">
+                                                {courseProgressPercentage}%
+                                            </span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                                            <div
+                                                className="bg-gradient-to-r from-purple-500 to-purple-600 h-3 rounded-full transition-all duration-300"
+                                                style={{ width: `${courseProgressPercentage}%` }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Course Indicators */}
+                                    {allCourses.length > 1 && (
+                                        <div className="flex justify-center space-x-2 mt-4">
+                                            {allCourses.map((_, index) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => setCurrentCourseIndex(index)}
+                                                    className={`w-2 h-2 rounded-full transition-colors ${
+                                                        index === currentCourseIndex
+                                                            ? 'bg-purple-500'
+                                                            : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                                                    }`}
+                                                    title={`Go to ${allCourses[index]?.name}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
                 {/* Calendar and Insights Section */}
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mb-8">

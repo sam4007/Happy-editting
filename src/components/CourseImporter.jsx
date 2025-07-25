@@ -1,13 +1,218 @@
-import React, { useState } from 'react'
-import { Download, Upload, CheckCircle, AlertCircle } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { Download, Upload, CheckCircle, AlertCircle, Youtube, Link, RefreshCw, Wifi, WifiOff } from 'lucide-react'
 import { useVideo } from '../contexts/VideoContext'
 
 const CourseImporter = ({ isOpen, onClose }) => {
-    const { addBulkVideos, videos } = useVideo()
+    const { addBulkVideos, videos, importYouTubePlaylist, categories, addCategory } = useVideo()
+    const [activeTab, setActiveTab] = useState('youtube') // 'youtube' or 'happy-editting'
     const [isImporting, setIsImporting] = useState(false)
     const [importStatus, setImportStatus] = useState('')
     const [showDuplicateWarning, setShowDuplicateWarning] = useState(false)
 
+    // YouTube import states
+    const [step, setStep] = useState(1) // 1: URL input, 2: Course Details, 3: Import Preview
+    const [playlistUrl, setPlaylistUrl] = useState('')
+    const [playlistId, setPlaylistId] = useState('')
+    const [selectedCategory, setSelectedCategory] = useState('')
+    const [newCategory, setNewCategory] = useState('')
+    const [showNewCategoryInput, setShowNewCategoryInput] = useState(false)
+    const [courseTitle, setCourseTitle] = useState('')
+    const [instructor, setInstructor] = useState('')
+    const [fetchedVideos, setFetchedVideos] = useState([])
+    const [playlistInfo, setPlaylistInfo] = useState(null)
+    const [error, setError] = useState('')
+    const [serverStatus, setServerStatus] = useState(null)
+    const [fetchProgress, setFetchProgress] = useState('')
+
+    const API_BASE_URL = 'http://localhost:5000/api'
+    const MAX_RETRIES = 3
+
+    // Check server status when component mounts or tab changes
+    useEffect(() => {
+        if (activeTab === 'youtube') {
+            checkServerStatus()
+        }
+    }, [activeTab])
+
+    // Reset states when tab changes
+    useEffect(() => {
+        setError('')
+        setImportStatus('')
+        setShowDuplicateWarning(false)
+        if (activeTab === 'youtube') {
+            setStep(1)
+            setPlaylistUrl('')
+            setFetchedVideos([])
+            setPlaylistInfo(null)
+        }
+    }, [activeTab])
+
+    // Check server status
+    const checkServerStatus = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/health`)
+            const data = await response.json()
+            setServerStatus(data)
+            return data
+        } catch (error) {
+            console.error('Server not available:', error)
+            setServerStatus({ status: 'ERROR', message: 'Server not running', hasApiKey: false })
+            return null
+        }
+    }
+
+    // Extract playlist ID from YouTube URL
+    const extractPlaylistId = (url) => {
+        const regex = /[?&]list=([^#&?]*)/
+        const match = url.match(regex)
+        return match ? match[1] : null
+    }
+
+    // Fetch real playlist data from YouTube API
+    const fetchRealPlaylistData = async (playlistId, attempt = 1) => {
+        try {
+            setFetchProgress(`Fetching playlist data... (Attempt ${attempt}/${MAX_RETRIES})`)
+
+            const response = await fetch(`${API_BASE_URL}/playlist/${playlistId}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                signal: AbortSignal.timeout(60000) // 60 second timeout
+            })
+
+            const data = await response.json()
+
+            if (!response.ok) {
+                throw new Error(data.message || data.error || `HTTP ${response.status}`)
+            }
+
+            setFetchProgress('')
+            return data
+        } catch (error) {
+            console.error(`Error fetching playlist (attempt ${attempt}):`, error)
+
+            if (attempt < MAX_RETRIES && !error.name?.includes('AbortError')) {
+                const delay = Math.pow(2, attempt) * 1000
+                setFetchProgress(`Retrying in ${delay / 1000} seconds...`)
+                await new Promise(resolve => setTimeout(resolve, delay))
+                return fetchRealPlaylistData(playlistId, attempt + 1)
+            }
+            throw error
+        }
+    }
+
+    // Handle YouTube playlist fetch
+    const handleFetchPlaylist = async () => {
+        setError('')
+        setIsImporting(true)
+        setFetchProgress('')
+
+        const serverStatus = await checkServerStatus()
+        if (!serverStatus || serverStatus.status === 'ERROR') {
+            setError('Backend server is not running. Please start the server with "npm run server"')
+            setIsImporting(false)
+            return
+        }
+
+        if (!serverStatus.hasApiKey) {
+            setError('YouTube API key is not configured. Please check your .env file and restart the server.')
+            setIsImporting(false)
+            return
+        }
+
+        if (!playlistUrl.trim()) {
+            setError('Please enter a YouTube playlist URL')
+            setIsImporting(false)
+            return
+        }
+
+        const extractedId = extractPlaylistId(playlistUrl)
+        if (!extractedId) {
+            setError('Invalid YouTube playlist URL. Please check the URL and try again.')
+            setIsImporting(false)
+            return
+        }
+
+        setPlaylistId(extractedId)
+        setFetchProgress('Connecting to YouTube API...')
+
+        try {
+            const data = await fetchRealPlaylistData(extractedId)
+
+            if (data.status === 'success') {
+                setPlaylistInfo(data.playlist)
+                setFetchedVideos(data.videos)
+                setCourseTitle(data.playlist.title)
+                setInstructor(data.playlist.channelTitle)
+                setStep(2)
+                setError('')
+            } else {
+                throw new Error(data.message || 'Failed to fetch playlist data')
+            }
+        } catch (error) {
+            console.error('Error fetching playlist:', error)
+            if (error.message.includes('quota')) {
+                setError('YouTube API quota exceeded. Please try again tomorrow or upgrade your quota limits.')
+            } else if (error.message.includes('API key')) {
+                setError('YouTube API key is invalid. Please check your .env file.')
+            } else if (error.message.includes('not found')) {
+                setError('Playlist not found. Please check the URL and ensure the playlist is public.')
+            } else {
+                setError(`Failed to fetch playlist: ${error.message}`)
+            }
+        } finally {
+            setIsImporting(false)
+            setFetchProgress('')
+        }
+    }
+
+    // Handle YouTube playlist import
+    const handleImportYouTubePlaylist = () => {
+        if (!selectedCategory && !newCategory) {
+            setError('Please select or create a category')
+            return
+        }
+
+        const categoryToUse = newCategory || selectedCategory
+
+        if (newCategory && !categories.includes(newCategory)) {
+            addCategory(newCategory)
+        }
+
+        const playlistData = {
+            playlistTitle: courseTitle || playlistInfo.title,
+            instructor: instructor || playlistInfo.channelTitle,
+            category: categoryToUse,
+            videos: fetchedVideos.map(video => ({
+                ...video,
+                category: categoryToUse,
+                instructor: instructor || playlistInfo.channelTitle,
+                source: 'youtube',
+                importedBy: 'YouTubeAPI'
+            })),
+            playlistInfo: {
+                ...playlistInfo,
+                importedBy: 'YouTubeAPI'
+            },
+            isReal: true,
+            importedBy: 'YouTubeAPI'
+        }
+
+        importYouTubePlaylist(playlistData)
+        setImportStatus(`Successfully imported ${fetchedVideos.length} videos from YouTube playlist!`)
+
+        setTimeout(() => {
+            onClose()
+            setImportStatus('')
+            setStep(1)
+            setPlaylistUrl('')
+            setFetchedVideos([])
+            setPlaylistInfo(null)
+        }, 2000)
+    }
+
+    // Happy Editting course data
     const happyEdittingCourse = [
         // PRO MINDSET - 6 Lessons
         {
@@ -946,14 +1151,15 @@ const CourseImporter = ({ isOpen, onClose }) => {
         }
     ]
 
-    // Check if course is already imported
+    // Check if Happy Editting course is already imported
     const isAlreadyImported = videos.some(video =>
         video.instructor === 'Happy Editting' &&
         video.category === 'Video Editing' &&
         video.module
     )
 
-    const handleImportCourse = async () => {
+    // Handle Happy Editting course import
+    const handleImportHappyEdittingCourse = async () => {
         if (isAlreadyImported && !showDuplicateWarning) {
             setShowDuplicateWarning(true)
             return
@@ -963,7 +1169,6 @@ const CourseImporter = ({ isOpen, onClose }) => {
         setImportStatus('Importing Happy Editting course...')
 
         try {
-            // Filter out videos that already exist to prevent duplicates
             const existingTitles = videos.map(v => v.title.toLowerCase())
             const newVideos = happyEdittingCourse.filter(video =>
                 !existingTitles.includes(video.title.toLowerCase())
@@ -976,7 +1181,6 @@ const CourseImporter = ({ isOpen, onClose }) => {
                 setImportStatus('All videos from Happy Editting course are already imported!')
             }
 
-            // Auto close after 2 seconds
             setTimeout(() => {
                 onClose()
                 setImportStatus('')
@@ -991,11 +1195,6 @@ const CourseImporter = ({ isOpen, onClose }) => {
         }
     }
 
-    const handleForceImport = () => {
-        setShowDuplicateWarning(false)
-        handleImportCourse()
-    }
-
     if (!isOpen) return null
 
     return (
@@ -1008,114 +1207,451 @@ const CourseImporter = ({ isOpen, onClose }) => {
 
             {/* Modal */}
             <div className="flex min-h-full items-center justify-center p-4">
-                <div className="relative w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-2xl transform transition-all">
-                    {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                            Import Course
-                        </h2>
+                <div className="relative w-full max-w-2xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl transform transition-all">
+                    {/* Header with Tabs */}
+                    <div className="border-b border-gray-200 dark:border-gray-700">
+                        <div className="flex items-center justify-between p-6 pb-0">
+                            <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                                Import Course
+                            </h2>
+                            <button
+                                onClick={onClose}
+                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Tab Navigation */}
+                        <div className="flex px-6 pt-4">
+                            <button
+                                onClick={() => setActiveTab('youtube')}
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-t-lg font-medium transition-colors ${activeTab === 'youtube'
+                                        ? 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-b-2 border-red-500'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                    }`}
+                            >
+                                <Youtube className="w-4 h-4" />
+                                <span>Import YouTube Playlist</span>
+                                {serverStatus?.status === 'ERROR' && (
+                                    <span className="text-red-500 text-xs">⚠️ Server Offline</span>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('happy-editting')}
+                                className={`flex items-center space-x-2 px-4 py-2 rounded-t-lg font-medium transition-colors ${activeTab === 'happy-editting'
+                                        ? 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 border-b-2 border-purple-500'
+                                        : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                                    }`}
+                            >
+                                <Download className="w-4 h-4" />
+                                <span>Import Course</span>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Content */}
                     <div className="p-6">
-                        <div className="text-center">
-                            <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${isAlreadyImported
-                                ? 'bg-green-100 dark:bg-green-900/20'
-                                : 'bg-purple-100 dark:bg-purple-900/20'
-                                }`}>
-                                {isAlreadyImported ? (
-                                    <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
-                                ) : (
-                                    <Download className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                        {activeTab === 'youtube' ? (
+                            <div>
+                                {/* YouTube Import Content */}
+                                {step === 1 && (
+                                    <div>
+                                        <div className="text-center mb-6">
+                                            <div className="w-16 h-16 mx-auto mb-4 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+                                                <Youtube className="w-8 h-8 text-red-600 dark:text-red-400" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                Import YouTube Playlist
+                                            </h3>
+                                            <div className="flex items-center justify-center space-x-2 mb-4">
+                                                {serverStatus?.status === 'OK' ? (
+                                                    <>
+                                                        <Wifi className="w-4 h-4 text-green-500" />
+                                                        <span className="text-sm text-green-600 dark:text-green-400">
+                                                            YouTube API Integration Active
+                                                        </span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <WifiOff className="w-4 h-4 text-red-500" />
+                                                        <span className="text-sm text-red-600 dark:text-red-400">
+                                                            Server Offline
+                                                        </span>
+                                                        <button
+                                                            onClick={checkServerStatus}
+                                                            className="ml-2 p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                                                            title="Refresh server status"
+                                                        >
+                                                            <RefreshCw className="w-3 h-3" />
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    YouTube Playlist URL
+                                                </label>
+                                                <div className="relative">
+                                                    <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                                    <input
+                                                        type="url"
+                                                        value={playlistUrl}
+                                                        onChange={(e) => setPlaylistUrl(e.target.value)}
+                                                        placeholder="https://www.youtube.com/playlist?list=..."
+                                                        className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                                                        disabled={isImporting}
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            {fetchProgress && (
+                                                <div className="flex items-center space-x-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                                    <RefreshCw className="w-4 h-4 text-blue-600 animate-spin" />
+                                                    <span className="text-sm text-blue-700 dark:text-blue-400">
+                                                        {fetchProgress}
+                                                    </span>
+                                                </div>
+                                            )}
+
+                                            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                                                <h4 className="font-medium text-gray-900 dark:text-white mb-2">
+                                                    How to get a YouTube playlist URL:
+                                                </h4>
+                                                <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                                    <li>1. Go to YouTube and find the playlist you want to import</li>
+                                                    <li>2. Click on the playlist to open it</li>
+                                                    <li>3. Copy the URL from your browser's address bar</li>
+                                                    <li>4. Paste it above and click "Fetch Playlist"</li>
+                                                </ol>
+                                                <div className="mt-3">
+                                                    <strong>Example URL:</strong> https://www.youtube.com/playlist?list=PLrxfgDEc2NxY_fRjEJVHntkVhGP_Di6G
+                                                </div>
+                                                <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                                                    <strong>Note:</strong> Only public and unlisted playlists can be imported.
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between mt-6">
+                                            <button
+                                                onClick={onClose}
+                                                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                onClick={handleFetchPlaylist}
+                                                disabled={isImporting || !playlistUrl.trim() || serverStatus?.status === 'ERROR'}
+                                                className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed flex items-center space-x-2"
+                                            >
+                                                {isImporting ? (
+                                                    <>
+                                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                                        <span>Fetching...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Download className="w-4 h-4" />
+                                                        <span>Fetch Playlist</span>
+                                                    </>
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {step === 2 && playlistInfo && (
+                                    <div>
+                                        <div className="text-center mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                Course Details
+                                            </h3>
+                                            <p className="text-gray-600 dark:text-gray-400">
+                                                Configure the course information before importing
+                                            </p>
+                                        </div>
+
+                                        <div className="space-y-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Course Title
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={courseTitle}
+                                                    onChange={(e) => setCourseTitle(e.target.value)}
+                                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Instructor
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={instructor}
+                                                    onChange={(e) => setInstructor(e.target.value)}
+                                                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                    Category
+                                                </label>
+                                                {!showNewCategoryInput ? (
+                                                    <div className="space-y-2">
+                                                        <select
+                                                            value={selectedCategory}
+                                                            onChange={(e) => setSelectedCategory(e.target.value)}
+                                                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                                                        >
+                                                            <option value="">Select a category</option>
+                                                            {categories.filter(cat => cat !== 'All').map(category => (
+                                                                <option key={category} value={category}>{category}</option>
+                                                            ))}
+                                                        </select>
+                                                        <button
+                                                            onClick={() => setShowNewCategoryInput(true)}
+                                                            className="text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                                                        >
+                                                            + Create new category
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="space-y-2">
+                                                        <input
+                                                            type="text"
+                                                            value={newCategory}
+                                                            onChange={(e) => setNewCategory(e.target.value)}
+                                                            placeholder="Enter new category name"
+                                                            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                                                        />
+                                                        <button
+                                                            onClick={() => {
+                                                                setShowNewCategoryInput(false)
+                                                                setNewCategory('')
+                                                            }}
+                                                            className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                                                        >
+                                                            Use existing category
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mt-6">
+                                            <div className="flex items-start space-x-3">
+                                                <Youtube className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                                <div>
+                                                    <h4 className="font-medium text-gray-900 dark:text-white mb-1">
+                                                        {playlistInfo.title}
+                                                    </h4>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                                        {playlistInfo.description?.substring(0, 150)}...
+                                                    </p>
+                                                    <div className="flex items-center space-x-4 text-xs text-gray-500 dark:text-gray-400">
+                                                        <span>{fetchedVideos.length} videos</span>
+                                                        <span>•</span>
+                                                        <span>Channel: {playlistInfo.channelTitle}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-between mt-6">
+                                            <button
+                                                onClick={() => setStep(1)}
+                                                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                Back
+                                            </button>
+                                            <button
+                                                onClick={() => setStep(3)}
+                                                disabled={!courseTitle || !instructor || (!selectedCategory && !newCategory)}
+                                                className="px-6 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                                            >
+                                                Preview Import
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {step === 3 && (
+                                    <div>
+                                        <div className="text-center mb-6">
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                                Import Preview
+                                            </h3>
+                                            <p className="text-gray-600 dark:text-gray-400">
+                                                <strong>Ready to import:</strong> This will import real YouTube playlist data including
+                                                actual video titles, descriptions, durations, and channel information from the YouTube Data API.
+                                            </p>
+                                        </div>
+
+                                        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-6">
+                                            <div className="flex items-center space-x-2 mb-3">
+                                                <CheckCircle className="w-5 h-5 text-green-600" />
+                                                <h4 className="font-medium text-green-800 dark:text-green-200">
+                                                    {courseTitle}
+                                                </h4>
+                                            </div>
+                                            <div className="text-sm text-green-700 dark:text-green-300 space-y-1">
+                                                <p><strong>Instructor:</strong> {instructor}</p>
+                                                <p><strong>Category:</strong> {newCategory || selectedCategory}</p>
+                                                <p><strong>Videos:</strong> {fetchedVideos.length} videos</p>
+                                                <p><strong>Source:</strong> YouTube Playlist</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
+                                            {fetchedVideos.slice(0, 5).map((video, index) => (
+                                                <div key={index} className="p-3 border-b border-gray-200 dark:border-gray-600 last:border-b-0">
+                                                    <div className="flex items-start space-x-3">
+                                                        <div className="w-8 h-6 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-center flex-shrink-0">
+                                                            <span className="text-xs text-gray-600 dark:text-gray-400">{index + 1}</span>
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                                                {video.title}
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {video.duration} • {video.channelTitle}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {fetchedVideos.length > 5 && (
+                                                <div className="p-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                                                    ... and {fetchedVideos.length - 5} more videos
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="flex justify-between mt-6">
+                                            <button
+                                                onClick={() => setStep(2)}
+                                                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                            >
+                                                Back
+                                            </button>
+                                            <button
+                                                onClick={handleImportYouTubePlaylist}
+                                                className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center space-x-2"
+                                            >
+                                                <Download className="w-4 h-4" />
+                                                <span>Import {fetchedVideos.length} Videos</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                 )}
                             </div>
+                        ) : (
+                            <div>
+                                {/* Happy Editting Course Import Content */}
+                                <div className="text-center">
+                                    <div className={`w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center ${isAlreadyImported
+                                        ? 'bg-green-100 dark:bg-green-900/20'
+                                        : 'bg-purple-100 dark:bg-purple-900/20'
+                                        }`}>
+                                        {isAlreadyImported ? (
+                                            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+                                        ) : (
+                                            <Download className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                                        )}
+                                    </div>
 
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                                Happy Editting Course
-                            </h3>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                        Happy Editting Course
+                                    </h3>
 
-                            <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                {isAlreadyImported ? (
-                                    showDuplicateWarning ? (
-                                        <>Course is already imported! This will create duplicates. Are you sure you want to continue?</>
-                                    ) : (
-                                        <>✅ Course is already imported with {videos.filter(v => v.instructor === 'Happy Editting' && v.category === 'Video Editing').length} videos. Your progress is saved!</>
-                                    )
-                                ) : (
-                                    <>Import the complete "Happy Editting" video editing course with {happyEdittingCourse.length} lessons covering:</>
-                                )}
-                            </p>
+                                    <p className="text-gray-600 dark:text-gray-400 mb-6">
+                                        {isAlreadyImported ? (
+                                            showDuplicateWarning ? (
+                                                <>Course is already imported! This will create duplicates. Are you sure you want to continue?</>
+                                            ) : (
+                                                <>✅ Course is already imported with {videos.filter(v => v.instructor === 'Happy Editting' && v.category === 'Video Editing').length} videos. Your progress is saved!</>
+                                            )
+                                        ) : (
+                                            <>Import the complete "Happy Editting" video editing course with comprehensive lessons covering all aspects of professional video editing.</>
+                                        )}
+                                    </p>
 
-                            {(!isAlreadyImported || showDuplicateWarning) && (
-                                <div className="text-left text-sm text-gray-700 dark:text-gray-300 mb-6 space-y-1">
-                                    <div>• Pro Mindset & Creative Thinking (6 lessons)</div>
-                                    <div>• Project Breakdowns (11 lessons)</div>
-                                    <div>• Project Workflows & Organization (4 lessons)</div>
-                                    <div>• Creative Tools & Techniques (15 lessons)</div>
-                                    <div>• After Effects Mastery (10 lessons)</div>
-                                    <div>• Business & Client Relations (7 lessons)</div>
-                                    <div>• Genre Breakdowns (6 lessons)</div>
-                                    <div>• Tour Visuals Masterclass (11 lessons)</div>
-                                    <div>• Blender 3D Masterclass (11 lessons)</div>
-                                    <div>• 3D Photo Masterclass (10 lessons)</div>
-                                    <div>• CRT Masterclass (5 lessons)</div>
-                                </div>
-                            )}
-
-                            {importStatus && (
-                                <div className={`flex items-center justify-center space-x-2 mb-4 p-3 rounded-lg ${importStatus.includes('Error')
-                                    ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
-                                    : importStatus.includes('Successfully')
-                                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400'
-                                        : 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
-                                    }`}>
-                                    {importStatus.includes('Successfully') ? (
-                                        <CheckCircle className="w-5 h-5" />
-                                    ) : importStatus.includes('Error') ? (
-                                        <AlertCircle className="w-5 h-5" />
-                                    ) : (
-                                        <Upload className="w-5 h-5 animate-bounce" />
+                                    {(!isAlreadyImported || showDuplicateWarning) && (
+                                        <div className="text-left text-sm text-gray-700 dark:text-gray-300 mb-6 space-y-1">
+                                            <div>• Pro Mindset & Creative Thinking</div>
+                                            <div>• Project Breakdowns & Analysis</div>
+                                            <div>• Professional Workflows</div>
+                                            <div>• Creative Tools & Techniques</div>
+                                            <div>• After Effects Mastery</div>
+                                            <div>• Business & Client Relations</div>
+                                        </div>
                                     )}
-                                    <span className="text-sm font-medium">{importStatus}</span>
+
+                                    <div className="flex space-x-3">
+                                        <button
+                                            onClick={onClose}
+                                            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                        >
+                                            {isAlreadyImported && !showDuplicateWarning ? 'Close' : 'Cancel'}
+                                        </button>
+
+                                        {showDuplicateWarning ? (
+                                            <button
+                                                onClick={handleImportHappyEdittingCourse}
+                                                disabled={isImporting}
+                                                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                                            >
+                                                {isImporting ? 'Importing...' : 'Force Import'}
+                                            </button>
+                                        ) : !isAlreadyImported ? (
+                                            <button
+                                                onClick={handleImportHappyEdittingCourse}
+                                                disabled={isImporting}
+                                                className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                                            >
+                                                {isImporting ? 'Importing...' : 'Import Course'}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={handleImportHappyEdittingCourse}
+                                                disabled={isImporting}
+                                                className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+                                            >
+                                                {isImporting ? 'Checking...' : 'Check for Updates'}
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            )}
-
-                            <div className="flex space-x-3">
-                                <button
-                                    onClick={onClose}
-                                    disabled={isImporting}
-                                    className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-                                >
-                                    {isAlreadyImported && !showDuplicateWarning ? 'Close' : 'Cancel'}
-                                </button>
-
-                                {showDuplicateWarning ? (
-                                    <button
-                                        onClick={handleForceImport}
-                                        disabled={isImporting}
-                                        className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                                    >
-                                        {isImporting ? 'Importing...' : 'Force Import'}
-                                    </button>
-                                ) : !isAlreadyImported ? (
-                                    <button
-                                        onClick={handleImportCourse}
-                                        disabled={isImporting}
-                                        className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                                    >
-                                        {isImporting ? 'Importing...' : 'Import Course'}
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleImportCourse}
-                                        disabled={isImporting}
-                                        className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
-                                    >
-                                        {isImporting ? 'Checking...' : 'Check for Updates'}
-                                    </button>
-                                )}
                             </div>
-                        </div>
+                        )}
+
+                        {/* Error Display */}
+                        {error && (
+                            <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                                <div className="flex items-center space-x-2">
+                                    <AlertCircle className="w-5 h-5 text-red-600" />
+                                    <span className="text-sm text-red-700 dark:text-red-400">{error}</span>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Success Display */}
+                        {importStatus && !error && (
+                            <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                                <div className="flex items-center space-x-2">
+                                    <CheckCircle className="w-5 h-5 text-green-600" />
+                                    <span className="text-sm text-green-700 dark:text-green-400">{importStatus}</span>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
