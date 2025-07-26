@@ -7,7 +7,9 @@ import {
     where,
     orderBy,
     getDocs,
-    onSnapshot
+    onSnapshot,
+    doc,
+    getDoc
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import {
@@ -19,7 +21,14 @@ import {
     X,
     MessageCircle,
     UserMinus,
-    Mail
+    Mail,
+    BookOpen,
+    TrendingUp,
+    Clock,
+    Award,
+    Calendar,
+    Play,
+    CheckCircle
 } from 'lucide-react'
 
 const Friends = () => {
@@ -45,12 +54,199 @@ const Friends = () => {
     const [conversations, setConversations] = useState([])
     const [loadingConversations, setLoadingConversations] = useState(false)
 
+    // Friend details modal state
+    const [selectedFriend, setSelectedFriend] = useState(null)
+    const [friendDetails, setFriendDetails] = useState(null)
+    const [loadingFriendDetails, setLoadingFriendDetails] = useState(false)
+    const [showFriendModal, setShowFriendModal] = useState(false)
+    const [selectedFriendsFriends, setSelectedFriendsFriends] = useState([])
+    const [loadingFriendsFriends, setLoadingFriendsFriends] = useState(false)
+
     // Load conversations when Messages tab is active
     useEffect(() => {
         if (activeTab === 'messages' && user) {
             loadConversations()
         }
     }, [activeTab, user])
+
+    // Load friend details when a friend is selected
+    useEffect(() => {
+        if (selectedFriend) {
+            loadFriendDetails(selectedFriend)
+            loadSelectedFriendsFriends(selectedFriend)
+        }
+    }, [selectedFriend])
+
+    const loadFriendDetails = async (friend) => {
+        setLoadingFriendDetails(true)
+        try {
+            // Get friend's stats from Firestore users collection
+            const friendRef = doc(db, 'users', friend.id)
+            const friendSnap = await getDoc(friendRef)
+
+            if (friendSnap.exists()) {
+                const friendData = friendSnap.data()
+                const friendStats = friendData.stats || {}
+
+                console.log('Friend data loaded:', friendData)
+                console.log('Friend stats:', friendStats)
+
+                // Convert studyHours to totalWatchTime in seconds (approximate)
+                const studyHours = friendStats.studyHours || 0
+                const totalWatchTimeSeconds = studyHours * 3600 // Convert hours to seconds
+
+                setFriendDetails({
+                    friend,
+                    stats: {
+                        totalCourses: friendStats.totalCourses || 0,
+                        completedCourses: friendStats.completedCourses || 0,
+                        totalWatchTime: totalWatchTimeSeconds,
+                        averageCompletion: friendStats.completionRate || 0,
+                        studyHours: studyHours
+                    },
+                    courses: [], // Individual course data is stored locally, not available
+                    hasDetailedCourses: false // Flag to show appropriate message
+                })
+            } else {
+                console.log('Friend document not found in Firestore')
+                setFriendDetails({
+                    friend,
+                    stats: {
+                        totalCourses: 0,
+                        completedCourses: 0,
+                        totalWatchTime: 0,
+                        averageCompletion: 0,
+                        studyHours: 0
+                    },
+                    courses: [],
+                    hasDetailedCourses: false
+                })
+            }
+        } catch (error) {
+            console.error('Error loading friend details:', error)
+            setFriendDetails({
+                friend,
+                stats: {
+                    totalCourses: 0,
+                    completedCourses: 0,
+                    totalWatchTime: 0,
+                    averageCompletion: 0,
+                    studyHours: 0
+                },
+                courses: [],
+                hasDetailedCourses: false
+            })
+        }
+        setLoadingFriendDetails(false)
+    }
+
+    const loadSelectedFriendsFriends = async (friend) => {
+        setLoadingFriendsFriends(true)
+        try {
+            // Get the friend's friends list from their user document
+            const friendRef = doc(db, 'users', friend.id)
+            const friendSnap = await getDoc(friendRef)
+
+            if (friendSnap.exists()) {
+                const friendData = friendSnap.data()
+                const friendsList = friendData.friends || []
+
+                // Get detailed information for each friend
+                const friendsDetails = []
+                for (const friendId of friendsList) {
+                    try {
+                        const userRef = doc(db, 'users', friendId)
+                        const userSnap = await getDoc(userRef)
+                        if (userSnap.exists()) {
+                            const userData = userSnap.data()
+                            friendsDetails.push({
+                                id: friendId,
+                                displayName: userData.displayName || userData.email,
+                                email: userData.email,
+                                stats: userData.stats || {}
+                            })
+                        }
+                    } catch (error) {
+                        console.error('Error loading friend details:', error)
+                    }
+                }
+
+                setSelectedFriendsFriends(friendsDetails)
+            } else {
+                setSelectedFriendsFriends([])
+            }
+        } catch (error) {
+            console.error('Error loading friend\'s friends:', error)
+            setSelectedFriendsFriends([])
+        }
+        setLoadingFriendsFriends(false)
+    }
+
+    const getFriendshipStatus = (friendId) => {
+        // Check if this user is already our friend
+        const isAlreadyFriend = friends.some(f => f.id === friendId)
+        if (isAlreadyFriend) return 'friends'
+
+        // Check if we've sent a friend request to this user
+        const hasSentRequest = sentRequests.some(req => req.to === friendId)
+        if (hasSentRequest) return 'pending'
+
+        // Check if this user sent us a friend request
+        const hasReceivedRequest = friendRequests.some(req => req.from === friendId)
+        if (hasReceivedRequest) return 'received'
+
+        // Check if this is the current user
+        if (friendId === user?.uid) return 'self'
+
+        return 'none'
+    }
+
+    const handleFollowUser = async (friendId) => {
+        const status = getFriendshipStatus(friendId)
+
+        if (status === 'none') {
+            await handleSendRequest(friendId)
+        } else if (status === 'friends') {
+            await handleRemoveFriend(friendId)
+            // Reload the selected friend's friends list to update the UI
+            loadSelectedFriendsFriends(selectedFriend)
+        }
+    }
+
+    const handleFriendClick = (friend) => {
+        console.log('🎯 Friend clicked:', friend)
+        console.log('📊 Friend stats:', friend.stats)
+        setSelectedFriend(friend)
+        setShowFriendModal(true)
+    }
+
+    const closeFriendModal = () => {
+        setShowFriendModal(false)
+        setSelectedFriend(null)
+        setFriendDetails(null)
+        setSelectedFriendsFriends([])
+    }
+
+    const formatDuration = (seconds) => {
+        if (!seconds) return '0m'
+        const hours = Math.floor(seconds / 3600)
+        const minutes = Math.floor((seconds % 3600) / 60)
+
+        if (hours > 0) {
+            return `${hours}h ${minutes}m`
+        }
+        return `${minutes}m`
+    }
+
+    const formatDate = (timestamp) => {
+        if (!timestamp) return 'Never'
+        const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp)
+        return date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric'
+        })
+    }
 
     const loadConversations = async () => {
         if (!user) return
@@ -217,8 +413,8 @@ const Friends = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-            <div className="max-w-4xl mx-auto">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 lg:pl-64">
+            <div className="p-6">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
                     <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Friends</h1>
 
@@ -338,42 +534,51 @@ const Friends = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {friends.map(friend => (
                                         <div key={friend.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                            <div className="flex items-center space-x-3 mb-3">
-                                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                                                    <User className="w-6 h-6 text-white" />
+                                            <div
+                                                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 -m-4 p-4 rounded-lg transition-colors"
+                                                onClick={() => handleFriendClick(friend)}
+                                            >
+                                                <div className="flex items-center space-x-3 mb-3">
+                                                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                                                        <User className="w-6 h-6 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-medium text-gray-900 dark:text-white">{friend.displayName}</h3>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">{friend.email}</p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <h3 className="font-medium text-gray-900 dark:text-white">{friend.displayName}</h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{friend.email}</p>
-                                                </div>
-                                            </div>
 
-                                            {/* Friend Stats */}
-                                            {friend.stats && (
+                                                {/* Friend Stats */}
                                                 <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                                     <div className="grid grid-cols-2 gap-2 text-sm">
                                                         <div className="text-center">
-                                                            <p className="font-semibold text-gray-900 dark:text-white">{friend.stats.totalCourses || 0}</p>
+                                                            <p className="font-semibold text-gray-900 dark:text-white">{friend.stats?.totalCourses || 0}</p>
                                                             <p className="text-gray-500 dark:text-gray-400">Courses</p>
                                                         </div>
                                                         <div className="text-center">
-                                                            <p className="font-semibold text-gray-900 dark:text-white">{friend.stats.completionRate || 0}%</p>
+                                                            <p className="font-semibold text-gray-900 dark:text-white">{friend.stats?.completionRate || 0}%</p>
                                                             <p className="text-gray-500 dark:text-gray-400">Completion</p>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )}
+                                            </div>
 
-                                            <div className="flex space-x-2">
+                                            <div className="flex space-x-2 mt-3">
                                                 <button
-                                                    onClick={() => window.location.href = `/messages/${friend.id}`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        window.location.href = `/messages/${friend.id}`
+                                                    }}
                                                     className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
                                                 >
                                                     <MessageCircle className="w-4 h-4" />
                                                     <span>Message</span>
                                                 </button>
                                                 <button
-                                                    onClick={() => handleRemoveFriend(friend.id)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        handleRemoveFriend(friend.id)
+                                                    }}
                                                     className="flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
                                                 >
                                                     <UserMinus className="w-4 h-4" />
@@ -476,6 +681,203 @@ const Friends = () => {
                     )}
                 </div>
             </div>
+
+            {/* Friend Details Modal */}
+            {showFriendModal && selectedFriend && (
+                <div
+                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    onClick={closeFriendModal}
+                >
+                    <div
+                        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                        <User className="w-8 h-8 text-white" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                            {selectedFriend.displayName}
+                                        </h2>
+                                        <p className="text-gray-600 dark:text-gray-400">
+                                            {selectedFriend.email}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={closeFriendModal}
+                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                >
+                                    <X className="w-6 h-6" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Content */}
+                        <div className="p-6">
+                            {loadingFriendDetails ? (
+                                <div className="flex justify-center items-center py-12">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                                    <span className="ml-3 text-gray-600 dark:text-gray-400">Loading friend's progress...</span>
+                                </div>
+                            ) : friendDetails ? (
+                                <div className="space-y-6">
+                                    {/* Progress Stats */}
+                                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6">
+                                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                                            <TrendingUp className="w-6 h-6 mr-2 text-blue-500" />
+                                            Learning Progress
+                                        </h3>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            <div className="text-center">
+                                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <BookOpen className="w-6 h-6 text-white" />
+                                                </div>
+                                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{friendDetails.stats.totalCourses}</p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">Total Courses</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <CheckCircle className="w-6 h-6 text-white" />
+                                                </div>
+                                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{friendDetails.stats.completedCourses}</p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <Clock className="w-6 h-6 text-white" />
+                                                </div>
+                                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{friendDetails.stats.studyHours}h</p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">Study Hours</p>
+                                            </div>
+                                            <div className="text-center">
+                                                <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                                                    <Award className="w-6 h-6 text-white" />
+                                                </div>
+                                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</p>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400">Completion Rate</p>
+                                            </div>
+                                        </div>
+
+                                        {/* Overall Completion Rate */}
+                                        <div className="mt-6">
+                                            <div className="flex items-center justify-between mb-2">
+                                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Completion</span>
+                                                <span className="text-sm font-medium text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                                                <div
+                                                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
+                                                    style={{ width: `${friendDetails.stats.averageCompletion}%` }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Friends Section */}
+                                    <div className="bg-white dark:bg-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                                            <Users className="w-6 h-6 mr-2 text-green-500" />
+                                            Friends ({selectedFriendsFriends.length})
+                                        </h3>
+
+                                        {loadingFriendsFriends ? (
+                                            <div className="flex justify-center items-center py-8">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                                <span className="ml-3 text-gray-600 dark:text-gray-400">Loading friends...</span>
+                                            </div>
+                                        ) : selectedFriendsFriends.length > 0 ? (
+                                            <div className="space-y-3 max-h-80 overflow-y-auto friends-modal-scrollbar">
+                                                {selectedFriendsFriends.map(friend => {
+                                                    const status = getFriendshipStatus(friend.id)
+                                                    return (
+                                                        <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors">
+                                                            <div className="flex items-center space-x-3">
+                                                                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                                                    <User className="w-5 h-5 text-white" />
+                                                                </div>
+                                                                <div>
+                                                                    <p className="font-medium text-gray-900 dark:text-white">{friend.displayName}</p>
+                                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{friend.email}</p>
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex items-center space-x-2">
+                                                                {status === 'self' ? (
+                                                                    <span className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full">
+                                                                        You
+                                                                    </span>
+                                                                ) : status === 'friends' ? (
+                                                                    <button
+                                                                        onClick={() => handleFollowUser(friend.id)}
+                                                                        className="flex items-center space-x-1 px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm transition-colors"
+                                                                    >
+                                                                        <UserMinus className="w-4 h-4" />
+                                                                        <span>Unfollow</span>
+                                                                    </button>
+                                                                ) : status === 'pending' ? (
+                                                                    <span className="px-3 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-full">
+                                                                        Pending
+                                                                    </span>
+                                                                ) : status === 'received' ? (
+                                                                    <span className="px-3 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full">
+                                                                        Requests you
+                                                                    </span>
+                                                                ) : (
+                                                                    <button
+                                                                        onClick={() => handleFollowUser(friend.id)}
+                                                                        className="flex items-center space-x-1 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm transition-colors"
+                                                                    >
+                                                                        <UserPlus className="w-4 h-4" />
+                                                                        <span>Follow</span>
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <div className="text-center py-8">
+                                                <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                                <p className="text-gray-500 dark:text-gray-400">This user has no friends yet.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center py-12">
+                                    <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                                    <p className="text-gray-500 dark:text-gray-400 text-lg">Unable to load friend's data</p>
+                                    <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Please try again later.</p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-xl">
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    onClick={() => window.location.href = `/messages/${selectedFriend.id}`}
+                                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    <MessageCircle className="w-4 h-4" />
+                                    <span>Send Message</span>
+                                </button>
+                                <button
+                                    onClick={closeFriendModal}
+                                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                                >
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
