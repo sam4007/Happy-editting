@@ -1,112 +1,100 @@
 import React, { useState, useMemo } from 'react'
-import {
-    TrendingUp,
-    Clock,
-    CheckCircle,
-    Star,
-    Target,
-    Award,
-    BookOpen,
-    Calendar,
-    BarChart3,
-    PieChart,
-    Activity,
-    Brain,
-    Zap,
-    Users,
-    Timer,
-    Trophy,
-    Download,
-    ArrowUp,
-    ArrowDown,
-    PlayCircle,
-    Pause,
-    TrendingDown,
-    Eye,
-    Heart,
-    Bookmark,
-    RefreshCw,
-    Settings,
-    Filter,
-    AlertCircle,
+import { 
+    BarChart, 
+    Bar, 
+    XAxis, 
+    YAxis, 
+    CartesianGrid, 
+    Tooltip, 
+    ResponsiveContainer,
+    PieChart, 
+    Pie, 
+    Cell,
     LineChart,
-    Gauge,
-    Flame,
-    Calendar as CalendarIcon,
-    FileText,
-    BarChart2,
-    MonitorPlay,
-    Headphones,
-    MousePointer,
-    Smartphone,
-    ArrowRight
+    Line,
+    Area,
+    AreaChart
+} from 'recharts'
+import { 
+    TrendingUp, 
+    ArrowUp, 
+    ArrowDown, 
+    BookOpen, 
+    Clock, 
+    Target, 
+    Award, 
+    Star, 
+    PlayCircle, 
+    CheckCircle, 
+    Pause,
+    Calendar,
+    Download,
+    Filter,
+    BarChart3,
+    TrendingDown,
+    Users,
+    Video,
+    Brain,
+    Zap
 } from 'lucide-react'
 import { useVideo } from '../contexts/VideoContext'
+import Calendar from '../components/Calendar'
+import WeeklyStreakBoard from '../components/WeeklyStreakBoard'
+import LearningInsights from '../components/LearningInsights'
+import { calculateCurrentStreak, calculateLongestStreak } from '../utils/streakCalculator'
 
 const Analytics = () => {
     const { videos, favorites, watchHistory, notes, bookmarks, dailyActivity } = useVideo()
-    const [selectedTimeRange, setSelectedTimeRange] = useState('all') // all, week, month, year
-    const [selectedCategory, setSelectedCategory] = useState('All')
+    const [selectedTimeRange, setSelectedTimeRange] = useState('all')
+    const [selectedCategory, setSelectedCategory] = useState('all')
     const [showExportModal, setShowExportModal] = useState(false)
 
-    // Get unique categories
+    // Get unique categories from videos
     const categories = useMemo(() => {
-        const uniqueCategories = [...new Set(videos.map(v => v.category))]
-        return ['All', ...uniqueCategories]
+        const cats = [...new Set(videos.map(video => video.category))]
+        return ['all', ...cats]
     }, [videos])
 
-    // Filter videos based on selected category
+    // Filter videos based on time range and category
     const filteredVideos = useMemo(() => {
-        if (selectedCategory === 'All') return videos
-        return videos.filter(v => v.category === selectedCategory)
-    }, [videos, selectedCategory])
+        let filtered = videos
+
+        // Filter by category
+        if (selectedCategory !== 'all') {
+            filtered = filtered.filter(video => video.category === selectedCategory)
+        }
+
+        // Filter by time range
+        if (selectedTimeRange !== 'all') {
+            const now = new Date()
+            const filterDate = new Date()
+
+            switch (selectedTimeRange) {
+                case '7d':
+                    filterDate.setDate(now.getDate() - 7)
+                    break
+                case '30d':
+                    filterDate.setDate(now.getDate() - 30)
+                    break
+                case '90d':
+                    filterDate.setDate(now.getDate() - 90)
+                    break
+                default:
+                    return filtered
+            }
+
+            filtered = filtered.filter(video => 
+                new Date(video.uploadDate || video.addedDate || Date.now()) >= filterDate
+            )
+        }
+
+        return filtered
+    }, [videos, selectedTimeRange, selectedCategory])
 
     // Helper function to convert duration to minutes
     const durationToMinutes = (duration) => {
         const [minutes, seconds] = duration.split(':').map(Number)
         return minutes + (seconds / 60)
-    }
-
-    // Calculate current learning streak
-    const calculateCurrentStreak = (activity) => {
-        const today = new Date()
-        let streak = 0
-
-        for (let i = 0; i < 365; i++) {
-            const date = new Date(today)
-            date.setDate(date.getDate() - i)
-            const dateStr = date.toISOString().split('T')[0]
-
-            if (activity[dateStr] && activity[dateStr].length > 0) {
-                streak++
-            } else {
-                break
-            }
-        }
-
-        return streak
-    }
-
-    // Calculate longest learning streak
-    const calculateLongestStreak = (activity) => {
-        const sortedDates = Object.keys(activity).sort()
-        let maxStreak = 0
-        let currentStreak = 0
-
-        for (let i = 0; i < sortedDates.length; i++) {
-            const currentDate = new Date(sortedDates[i])
-            const prevDate = i > 0 ? new Date(sortedDates[i - 1]) : null
-
-            if (prevDate && (currentDate - prevDate) === 86400000) { // 24 hours
-                currentStreak++
-            } else {
-                currentStreak = 1
-            }
-
-            maxStreak = Math.max(maxStreak, currentStreak)
-        }
-
-        return maxStreak
     }
 
     // Format duration for display
@@ -391,7 +379,7 @@ ${filteredVideos.map(video => {
         {
             title: 'Current Streak',
             value: `${analytics.currentStreak} days`,
-            icon: Flame,
+            icon: Brain,
             color: 'bg-orange-500',
             change: analytics.currentStreak > 0 ? '+1' : '0',
             positive: analytics.currentStreak > 0,

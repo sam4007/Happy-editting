@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import {
     TrendingUp,
@@ -21,9 +21,18 @@ import { useVideo } from '../contexts/VideoContext'
 import VideoCard from '../components/VideoCard'
 import AddVideoModal from '../components/AddVideoModal'
 import CourseImporter from '../components/CourseImporter'
+import { calculateCurrentStreak, getStreakMessage } from '../utils/streakCalculator'
 
 const Dashboard = () => {
-    const { videos, favorites, watchHistory, dailyActivity, recentActivities } = useVideo()
+    const {
+        videos,
+        favorites,
+        watchHistory,
+        notes,
+        bookmarks,
+        recentActivities,
+        dailyActivity
+    } = useVideo()
     const [showAddModal, setShowAddModal] = useState(false)
     const [showCourseImporter, setShowCourseImporter] = useState(false)
     const [currentCourseIndex, setCurrentCourseIndex] = useState(0)
@@ -47,7 +56,7 @@ const Dashboard = () => {
     // Helper function to format activity display
     const getActivityDisplay = (activity) => {
         const timeAgo = new Date(activity.timestamp).toLocaleString()
-        
+
         switch (activity.type) {
             case 'video_watched':
                 return {
@@ -379,10 +388,12 @@ const Dashboard = () => {
                     </div>
                     <div>
                         <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                            7
+                            {calculateCurrentStreak(dailyActivity)}
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Day Streak</p>
-                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Keep it up!</p>
+                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                            {getStreakMessage(calculateCurrentStreak(dailyActivity))}
+                        </p>
                     </div>
                 </div>
             </div>
