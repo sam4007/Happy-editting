@@ -27,7 +27,7 @@ import {
     PlayCircle, 
     CheckCircle, 
     Pause,
-    Calendar,
+    Calendar as CalendarIcon,
     Download,
     Filter,
     BarChart3,
