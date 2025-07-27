@@ -227,45 +227,56 @@ const Settings = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 lg:pl-64">
-            <div className="p-6">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 lg:pl-64">
+            <div className="p-6 space-y-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                        Settings
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        Manage your account and app preferences
-                    </p>
+                <div className="glass-card p-8">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                Settings
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Manage your account and app preferences
+                            </p>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Shield className="w-8 h-8 text-indigo-500" />
+                        </div>
+                    </div>
                 </div>
 
                 {/* Success/Error Messages */}
                 {success && (
-                    <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center space-x-2">
-                        <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm text-green-700 dark:text-green-300">{success}</span>
+                    <div className="glass-card p-6 border-l-4 border-green-500 bg-green-50/50 dark:bg-green-900/20">
+                        <div className="flex items-center space-x-3">
+                            <Check className="w-5 h-5 text-green-500 flex-shrink-0" />
+                            <span className="text-sm font-medium text-green-700 dark:text-green-300">{success}</span>
+                        </div>
                     </div>
                 )}
 
                 {error && (
-                    <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center space-x-2">
-                        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                        <span className="text-sm text-red-700 dark:text-red-300">{error}</span>
+                    <div className="glass-card p-6 border-l-4 border-red-500 bg-red-50/50 dark:bg-red-900/20">
+                        <div className="flex items-center space-x-3">
+                            <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+                            <span className="text-sm font-medium text-red-700 dark:text-red-300">{error}</span>
+                        </div>
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* Sidebar */}
                     <div className="lg:col-span-1">
-                        <nav className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="glass-card p-6">
                             <div className="space-y-2">
                                 {tabs.map((tab) => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${activeTab === tab.id
-                                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                                        className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 ${activeTab === tab.id
+                                                ? 'bg-indigo-500 text-white shadow-lg'
+                                                : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50'
                                             }`}
                                     >
                                         <tab.icon className="w-5 h-5" />
@@ -273,132 +284,137 @@ const Settings = () => {
                                     </button>
                                 ))}
                             </div>
-                        </nav>
+                        </div>
                     </div>
 
                     {/* Content */}
                     <div className="lg:col-span-3">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div className="glass-card p-8">
                             {activeTab === 'profile' && (
-                                <div className="space-y-6">
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                                <div className="space-y-8">
+                                    <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
+                                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                                             Profile Information
                                         </h3>
+                                        <p className="text-gray-600 dark:text-gray-400">
+                                            Update your personal information and profile settings
+                                        </p>
+                                    </div>
 
-                                        {dataLoading ? (
-                                            <div className="flex justify-center items-center h-64">
-                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                                    {dataLoading ? (
+                                        <div className="flex justify-center items-center h-64">
+                                            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <div className="flex items-center space-x-6 p-6 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                                                <div className="relative">
+                                                    {profileData.photoURL ? (
+                                                        <img
+                                                            src={profileData.photoURL}
+                                                            alt="Profile"
+                                                            className="w-24 h-24 rounded-full object-cover border-4 border-white dark:border-gray-700 shadow-lg"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center border-4 border-white dark:border-gray-700 shadow-lg">
+                                                            <span className="text-white font-bold text-2xl">
+                                                                {getInitials(profileData.displayName)}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <label className="absolute bottom-0 right-0 bg-indigo-500 text-white rounded-full p-2 shadow-lg cursor-pointer hover:bg-indigo-600 transition-colors">
+                                                        <Camera className="w-4 h-4" />
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            onChange={handleImageUpload}
+                                                            className="hidden"
+                                                        />
+                                                    </label>
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">
+                                                        Profile Picture
+                                                    </h4>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                                                        Click the camera icon to upload a new picture
+                                                    </p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                                                        Max file size: 5MB • PNG, JPG, GIF supported
+                                                    </p>
+                                                </div>
                                             </div>
-                                        ) : (
-                                            <>
-                                                <div className="flex items-center space-x-4 mb-6">
-                                                    <div className="relative">
-                                                        {profileData.photoURL ? (
-                                                            <img
-                                                                src={profileData.photoURL}
-                                                                alt="Profile"
-                                                                className="w-20 h-20 rounded-full object-cover"
-                                                            />
-                                                        ) : (
-                                                            <div className="w-20 h-20 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
-                                                                <span className="text-white font-bold text-2xl">
-                                                                    {getInitials(profileData.displayName)}
-                                                                </span>
-                                                            </div>
-                                                        )}
-                                                        <label className="absolute bottom-0 right-0 bg-white dark:bg-gray-700 rounded-full p-2 shadow-md cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors">
-                                                            <Camera className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                                                            <input
-                                                                type="file"
-                                                                accept="image/*"
-                                                                onChange={handleImageUpload}
-                                                                className="hidden"
-                                                            />
-                                                        </label>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                                            Click the camera icon to upload a new profile picture
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                                            Max file size: 5MB
-                                                        </p>
-                                                    </div>
-                                                </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Full Name
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            name="displayName"
-                                                            value={profileData.displayName}
-                                                            onChange={handleProfileChange}
-                                                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                                            placeholder="Enter your full name"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Email
-                                                        </label>
-                                                        <input
-                                                            type="email"
-                                                            name="email"
-                                                            value={profileData.email}
-                                                            disabled
-                                                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-600 text-gray-900 dark:text-white cursor-not-allowed"
-                                                        />
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                                            Email cannot be changed here. Contact support if needed.
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Phone Number
-                                                        </label>
-                                                        <input
-                                                            type="tel"
-                                                            name="phoneNumber"
-                                                            value={profileData.phoneNumber}
-                                                            onChange={handleProfileChange}
-                                                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                                            placeholder="Enter your phone number"
-                                                        />
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Location
-                                                        </label>
-                                                        <input
-                                                            type="text"
-                                                            name="location"
-                                                            value={profileData.location}
-                                                            onChange={handleProfileChange}
-                                                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                                            placeholder="City, Country"
-                                                        />
-                                                    </div>
-                                                    <div className="md:col-span-2">
-                                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                                            Website
-                                                        </label>
-                                                        <input
-                                                            type="url"
-                                                            name="website"
-                                                            value={profileData.website}
-                                                            onChange={handleProfileChange}
-                                                            className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                                            placeholder="https://your-website.com"
-                                                        />
-                                                    </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                                        Full Name
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="displayName"
+                                                        value={profileData.displayName}
+                                                        onChange={handleProfileChange}
+                                                        className="input-premium"
+                                                        placeholder="Enter your full name"
+                                                    />
                                                 </div>
-
-                                                <div className="mt-4">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                                        Email
+                                                    </label>
+                                                    <input
+                                                        type="email"
+                                                        name="email"
+                                                        value={profileData.email}
+                                                        disabled
+                                                        className="input-premium opacity-50 cursor-not-allowed"
+                                                    />
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                                        Email cannot be changed here. Contact support if needed.
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                                        Phone Number
+                                                    </label>
+                                                    <input
+                                                        type="tel"
+                                                        name="phoneNumber"
+                                                        value={profileData.phoneNumber}
+                                                        onChange={handleProfileChange}
+                                                        className="input-premium"
+                                                        placeholder="Enter your phone number"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                                        Location
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        name="location"
+                                                        value={profileData.location}
+                                                        onChange={handleProfileChange}
+                                                        className="input-premium"
+                                                        placeholder="City, Country"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                                                        Website
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        name="website"
+                                                        value={profileData.website}
+                                                        onChange={handleProfileChange}
+                                                        className="input-premium"
+                                                        placeholder="https://your-website.com"
+                                                    />
+                                                </div>
+                                                <div className="md:col-span-2">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                                                         Bio
                                                     </label>
                                                     <textarea
@@ -406,70 +422,51 @@ const Settings = () => {
                                                         value={profileData.bio}
                                                         onChange={handleProfileChange}
                                                         rows={4}
-                                                        className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                                                        className="input-premium resize-none"
                                                         placeholder="Tell us about yourself..."
                                                     />
                                                 </div>
-
-                                                {/* Account Status */}
-                                                <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                                    <h4 className="font-medium text-gray-900 dark:text-white mb-2">Account Status</h4>
-                                                    <div className="space-y-2">
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-gray-600 dark:text-gray-400">Email Verified</span>
-                                                            <span className={`text-sm font-medium ${user?.emailVerified ? 'text-green-600' : 'text-red-600'}`}>
-                                                                {user?.emailVerified ? 'Verified' : 'Not Verified'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-gray-600 dark:text-gray-400">Account Type</span>
-                                                            <span className="text-sm font-medium text-primary-600">Premium Member</span>
-                                                        </div>
-                                                        <div className="flex items-center justify-between">
-                                                            <span className="text-sm text-gray-600 dark:text-gray-400">Member Since</span>
-                                                            <span className="text-sm text-gray-900 dark:text-white">
-                                                                {user?.metadata?.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'N/A'}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-                                    </div>
-
-                                    <div>
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                                            Appearance
-                                        </h3>
-
-                                        <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                            <div className="flex items-center space-x-3">
-                                                {darkMode ? (
-                                                    <Moon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                                ) : (
-                                                    <Sun className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                                )}
-                                                <div>
-                                                    <p className="font-medium text-gray-900 dark:text-white">
-                                                        Dark Mode
-                                                    </p>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                                        Switch between light and dark themes
-                                                    </p>
-                                                </div>
                                             </div>
-                                            <button
-                                                onClick={toggleTheme}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${darkMode ? 'bg-primary-600' : 'bg-gray-200'
-                                                    }`}
-                                            >
-                                                <span
-                                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${darkMode ? 'translate-x-6' : 'translate-x-1'
-                                                        }`}
-                                                />
-                                            </button>
-                                        </div>
-                                    </div>
+
+                                            <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        // Reset form
+                                                        setProfileData({
+                                                            displayName: user?.displayName || '',
+                                                            email: user?.email || '',
+                                                            photoURL: user?.photoURL || '',
+                                                            bio: '',
+                                                            phoneNumber: '',
+                                                            location: '',
+                                                            website: ''
+                                                        })
+                                                    }}
+                                                    className="btn-secondary"
+                                                >
+                                                    Reset
+                                                </button>
+                                                <button
+                                                    onClick={handleProfileUpdate}
+                                                    disabled={loading}
+                                                    className="btn-primary"
+                                                >
+                                                    {loading ? (
+                                                        <div className="flex items-center space-x-2">
+                                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                                            <span>Saving...</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center space-x-2">
+                                                            <Save className="w-4 h-4" />
+                                                            <span>Save Changes</span>
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
                             )}
 

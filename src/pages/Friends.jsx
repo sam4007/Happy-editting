@@ -413,173 +413,238 @@ const Friends = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 lg:pl-64">
-            <div className="p-6">
-                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Friends</h1>
-
-                    {/* Message */}
-                    {message && (
-                        <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                            <p className="text-blue-700 dark:text-blue-300">{message}</p>
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 lg:pl-64">
+            <div className="p-6 space-y-8">
+                {/* Header */}
+                <div className="glass-card p-8">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                Friends
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Connect with fellow learners and share your progress
+                            </p>
                         </div>
-                    )}
-
-                    {/* Search */}
-                    <div className="mb-6">
-                        <form onSubmit={handleSearch} className="flex gap-2">
-                            <div className="flex-1 relative">
-                                <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search users by email..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                />
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                            >
-                                {loading ? 'Searching...' : 'Search'}
-                            </button>
-                        </form>
+                        <div className="flex items-center space-x-2">
+                            <Users className="w-8 h-8 text-indigo-500" />
+                            <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                                {friends.length}
+                            </span>
+                        </div>
                     </div>
+                </div>
 
-                    {/* Search Results */}
-                    {searchResults.length > 0 && (
-                        <div className="mb-6">
-                            <h2 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">Search Results</h2>
-                            <div className="space-y-2">
-                                {searchResults.map(user => (
-                                    <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                        <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                                                <User className="w-5 h-5 text-white" />
-                                            </div>
-                                            <div>
-                                                <p className="font-medium text-gray-900 dark:text-white">{user.displayName}</p>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">{user.email}</p>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={() => handleSendRequest(user.id)}
-                                            disabled={sentRequests.some(req => req.to === user.id)}
-                                            className="flex items-center space-x-1 px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-400 text-sm"
-                                        >
-                                            <UserPlus className="w-4 h-4" />
-                                            <span>
-                                                {sentRequests.some(req => req.to === user.id) ? 'Sent' : 'Add Friend'}
-                                            </span>
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
+                {/* Message */}
+                {message && (
+                    <div className="glass-card p-6 border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-900/20">
+                        <p className="text-blue-700 dark:text-blue-300 font-medium">{message}</p>
+                    </div>
+                )}
+
+                {/* Search Section */}
+                <div className="glass-card p-6">
+                    <div className="flex items-center space-x-3 mb-4">
+                        <Search className="w-5 h-5 text-indigo-500" />
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                            Find Friends
+                        </h2>
+                    </div>
+                    <form onSubmit={handleSearch} className="flex gap-4">
+                        <div className="flex-1 relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Search users by email..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="input-premium pl-10"
+                            />
                         </div>
-                    )}
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="btn-primary"
+                        >
+                            {loading ? 'Searching...' : 'Search'}
+                        </button>
+                    </form>
+                </div>
 
-                    {/* Tabs */}
-                    <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
-                        <nav className="flex space-x-8">
-                            <button
-                                onClick={() => setActiveTab('friends')}
-                                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'friends'
-                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                                    }`}
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <Users className="w-4 h-4" />
-                                    <span>Friends ({friends.length})</span>
+                {/* Search Results */}
+                {searchResults.length > 0 && (
+                    <div className="glass-card p-6">
+                        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center space-x-2">
+                            <UserPlus className="w-5 h-5 text-green-500" />
+                            <span>Search Results</span>
+                        </h3>
+                        <div className="space-y-3">
+                            {searchResults.map(user => (
+                                <div key={user.id} className="flex items-center justify-between p-4 rounded-xl bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                                            <User className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-gray-900 dark:text-white">
+                                                {user.displayName || user.email}
+                                            </p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="flex space-x-2">
+                                        {getFriendshipStatus(user.id) === 'none' && (
+                                            <button
+                                                onClick={() => sendFriendRequest(user.id)}
+                                                className="btn-primary text-sm"
+                                            >
+                                                <UserPlus className="w-4 h-4 mr-1" />
+                                                Add Friend
+                                            </button>
+                                        )}
+                                        {getFriendshipStatus(user.id) === 'pending' && (
+                                            <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-full text-sm font-medium">
+                                                Request Sent
+                                            </span>
+                                        )}
+                                        {getFriendshipStatus(user.id) === 'friends' && (
+                                            <span className="px-3 py-1 bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300 rounded-full text-sm font-medium">
+                                                Friends
+                                            </span>
+                                        )}
+                                        {getFriendshipStatus(user.id) === 'received' && (
+                                            <div className="flex space-x-1">
+                                                <button
+                                                    onClick={() => acceptFriendRequest(user.id)}
+                                                    className="btn-primary text-sm"
+                                                >
+                                                    <Check className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => rejectFriendRequest(user.id)}
+                                                    className="btn-secondary text-sm"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        )}
+                                        {getFriendshipStatus(user.id) === 'self' && (
+                                            <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 rounded-full text-sm">
+                                                You
+                                            </span>
+                                        )}
+                                    </div>
                                 </div>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('requests')}
-                                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'requests'
-                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                                    }`}
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <Mail className="w-4 h-4" />
-                                    <span>Requests ({friendRequests.length})</span>
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('messages')}
-                                className={`py-2 px-1 border-b-2 font-medium text-sm ${activeTab === 'messages'
-                                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
-                                    }`}
-                            >
-                                <div className="flex items-center space-x-2">
-                                    <MessageCircle className="w-4 h-4" />
-                                    <span>Messages ({conversations.length})</span>
-                                </div>
-                            </button>
-                        </nav>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Tabs */}
+                <div className="glass-card p-6">
+                    <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                        <button
+                            onClick={() => setActiveTab('friends')}
+                            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'friends'
+                                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                }`}
+                        >
+                            <Users className="w-4 h-4" />
+                            <span>Friends ({friends.length})</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('requests')}
+                            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'requests'
+                                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                }`}
+                        >
+                            <Mail className="w-4 h-4" />
+                            <span>Requests ({friendRequests.length})</span>
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('messages')}
+                            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'messages'
+                                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                }`}
+                        >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>Messages ({conversations.length})</span>
+                        </button>
                     </div>
 
                     {/* Content */}
                     {activeTab === 'friends' && (
                         <div>
                             {friends.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                    <p className="text-gray-500 dark:text-gray-400">No friends yet. Search for users to add them!</p>
+                                <div className="text-center py-16">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 to-purple-100 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Users className="w-10 h-10 text-indigo-500" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No friends yet</h3>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-4">Start building your learning network!</p>
+                                    <button
+                                        onClick={() => setActiveTab('search')}
+                                        className="btn-primary"
+                                    >
+                                        Find Friends
+                                    </button>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                     {friends.map(friend => (
-                                        <div key={friend.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                                            <div
-                                                className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 -m-4 p-4 rounded-lg transition-colors"
-                                                onClick={() => handleFriendClick(friend)}
-                                            >
-                                                <div className="flex items-center space-x-3 mb-3">
-                                                    <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                                                        <User className="w-6 h-6 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="font-medium text-gray-900 dark:text-white">{friend.displayName}</h3>
-                                                        <p className="text-sm text-gray-500 dark:text-gray-400">{friend.email}</p>
-                                                    </div>
+                                        <div key={friend.id} className="group relative p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => handleFriendClick(friend)}>
+                                            <div className="flex items-center space-x-4 mb-4">
+                                                <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                    <User className="w-7 h-7 text-white" />
                                                 </div>
-
-                                                {/* Friend Stats */}
-                                                <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                                    <div className="grid grid-cols-2 gap-2 text-sm">
-                                                        <div className="text-center">
-                                                            <p className="font-semibold text-gray-900 dark:text-white">{friend.stats?.totalCourses || 0}</p>
-                                                            <p className="text-gray-500 dark:text-gray-400">Courses</p>
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <p className="font-semibold text-gray-900 dark:text-white">{friend.stats?.completionRate || 0}%</p>
-                                                            <p className="text-gray-500 dark:text-gray-400">Completion</p>
-                                                        </div>
-                                                    </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                        {friend.displayName}
+                                                    </h3>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                        {friend.email}
+                                                    </p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex space-x-2 mt-3">
+                                            {/* Friend Stats */}
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="text-center p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+                                                    <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
+                                                        {friend.stats?.totalCourses || 0}
+                                                    </div>
+                                                    <div className="text-xs text-gray-600 dark:text-gray-400">Courses</div>
+                                                </div>
+                                                <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
+                                                    <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                                                        {Math.round((friend.stats?.totalWatchTime || 0) / 3600)}h
+                                                    </div>
+                                                    <div className="text-xs text-gray-600 dark:text-gray-400">Study Time</div>
+                                                </div>
+                                            </div>
+
+                                            <div className="mt-4 flex space-x-2">
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation()
-                                                        window.location.href = `/messages/${friend.id}`
+                                                        // Handle message functionality
                                                     }}
-                                                    className="flex-1 flex items-center justify-center space-x-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+                                                    className="flex-1 btn-primary text-sm"
                                                 >
-                                                    <MessageCircle className="w-4 h-4" />
-                                                    <span>Message</span>
+                                                    <MessageCircle className="w-4 h-4 mr-1" />
+                                                    Message
                                                 </button>
                                                 <button
                                                     onClick={(e) => {
                                                         e.stopPropagation()
-                                                        handleRemoveFriend(friend.id)
+                                                        removeFriend(friend.id)
                                                     }}
-                                                    className="flex items-center justify-center px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
+                                                    className="btn-secondary text-sm px-3"
                                                 >
                                                     <UserMinus className="w-4 h-4" />
                                                 </button>
@@ -594,38 +659,46 @@ const Friends = () => {
                     {activeTab === 'requests' && (
                         <div>
                             {friendRequests.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <Mail className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                    <p className="text-gray-500 dark:text-gray-400">No friend requests</p>
+                                <div className="text-center py-16">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Mail className="w-10 h-10 text-blue-500" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No friend requests</h3>
+                                    <p className="text-gray-500 dark:text-gray-400">You're all caught up!</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
                                     {friendRequests.map(request => (
-                                        <div key={request.id} className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                                            <div className="flex items-center space-x-3">
-                                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
-                                                    <User className="w-6 h-6 text-white" />
+                                        <div key={request.id} className="p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center space-x-4">
+                                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
+                                                        <User className="w-7 h-7 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="font-semibold text-gray-900 dark:text-white">{request.fromName}</h3>
+                                                        <p className="text-sm text-gray-500 dark:text-gray-400">{request.fromEmail}</p>
+                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                            Wants to connect with you
+                                                        </p>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-medium text-gray-900 dark:text-white">{request.fromName}</p>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{request.fromEmail}</p>
+                                                <div className="flex space-x-3">
+                                                    <button
+                                                        onClick={() => handleAcceptRequest(request.id, request.from)}
+                                                        className="btn-primary text-sm"
+                                                    >
+                                                        <Check className="w-4 h-4 mr-1" />
+                                                        Accept
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleRejectRequest(request.id)}
+                                                        className="btn-secondary text-sm"
+                                                    >
+                                                        <X className="w-4 h-4 mr-1" />
+                                                        Decline
+                                                    </button>
                                                 </div>
-                                            </div>
-                                            <div className="flex space-x-2">
-                                                <button
-                                                    onClick={() => handleAcceptRequest(request.id, request.from)}
-                                                    className="flex items-center space-x-1 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm"
-                                                >
-                                                    <Check className="w-4 h-4" />
-                                                    <span>Accept</span>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleRejectRequest(request.id)}
-                                                    className="flex items-center space-x-1 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm"
-                                                >
-                                                    <X className="w-4 h-4" />
-                                                    <span>Reject</span>
-                                                </button>
                                             </div>
                                         </div>
                                     ))}
@@ -637,42 +710,54 @@ const Friends = () => {
                     {activeTab === 'messages' && (
                         <div>
                             {loadingConversations ? (
-                                <div className="flex justify-center items-center py-12">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                <div className="flex justify-center items-center py-16">
+                                    <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
                                 </div>
                             ) : conversations.length === 0 ? (
-                                <div className="text-center py-12">
-                                    <MessageCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                    <p className="text-gray-500 dark:text-gray-400">No conversations yet. Start messaging your friends!</p>
+                                <div className="text-center py-16">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <MessageCircle className="w-10 h-10 text-purple-500" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No conversations yet</h3>
+                                    <p className="text-gray-500 dark:text-gray-400 mb-4">Start messaging your friends!</p>
+                                    <button
+                                        onClick={() => setActiveTab('friends')}
+                                        className="btn-primary"
+                                    >
+                                        View Friends
+                                    </button>
                                 </div>
                             ) : (
-                                <div className="space-y-2">
+                                <div className="space-y-3">
                                     {conversations.map(conversation => (
                                         <div
                                             key={conversation.chatId}
-                                            className="flex items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer transition-colors"
+                                            className="group p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-lg transition-all cursor-pointer"
                                             onClick={() => window.location.href = `/messages/${conversation.friend.id}`}
                                         >
-                                            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
-                                                <User className="w-6 h-6 text-white" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center justify-between mb-1">
-                                                    <h3 className="font-medium text-gray-900 dark:text-white truncate">
-                                                        {conversation.friend.displayName}
-                                                    </h3>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-2">
-                                                        {formatTime(conversation.latestMessage.timestamp)}
-                                                    </span>
+                                            <div className="flex items-center space-x-4">
+                                                <div className="relative">
+                                                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
+                                                        <User className="w-7 h-7 text-white" />
+                                                    </div>
+                                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
                                                 </div>
-                                                <div className="flex items-center">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                                            {conversation.friend.displayName}
+                                                        </h3>
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                            {formatTime(conversation.latestMessage.timestamp)}
+                                                        </span>
+                                                    </div>
                                                     <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                                                         {conversation.latestMessage.senderId === user.uid ? 'You: ' : ''}
                                                         {conversation.latestMessage.message}
                                                     </p>
                                                 </div>
+                                                <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
                                             </div>
-                                            <MessageCircle className="w-5 h-5 text-gray-400 ml-2" />
                                         </div>
                                     ))}
                                 </div>

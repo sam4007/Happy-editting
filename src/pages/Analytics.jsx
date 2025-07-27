@@ -418,150 +418,170 @@ ${filteredVideos.map(video => {
     ]
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 lg:pl-64">
-            <div className="p-6">
+        <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 lg:pl-64">
+            <div className="p-6 space-y-8">
                 {/* Header */}
-                <div className="flex items-center justify-between mb-8">
-                    <div>
-                        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                            Learning Analytics
-                        </h1>
-                        <p className="text-gray-600 dark:text-gray-400">
-                            Comprehensive insights into your learning journey
-                        </p>
-                    </div>
+                <div className="glass-card p-8">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                                Learning Analytics
+                            </h1>
+                            <p className="text-gray-600 dark:text-gray-400">
+                                Comprehensive insights into your learning journey
+                            </p>
+                        </div>
 
-                    <div className="flex items-center space-x-4">
-                        {/* Category Filter */}
-                        <select
-                            value={selectedCategory}
-                            onChange={(e) => setSelectedCategory(e.target.value)}
-                            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        >
-                            {categories.map(category => (
-                                <option key={category} value={category}>{category}</option>
-                            ))}
-                        </select>
+                        <div className="flex items-center space-x-4">
+                            {/* Category Filter */}
+                            <select
+                                value={selectedCategory}
+                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                className="input-premium"
+                            >
+                                {categories.map(category => (
+                                    <option key={category} value={category}>{category}</option>
+                                ))}
+                            </select>
 
-                        {/* Export Button */}
-                        <button
-                            onClick={() => setShowExportModal(true)}
-                            className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-                        >
-                            <Download className="w-4 h-4" />
-                            <span>Export</span>
-                        </button>
+                            {/* Export Button */}
+                            <button
+                                onClick={() => setShowExportModal(true)}
+                                className="btn-primary"
+                            >
+                                <Download className="w-4 h-4 mr-2" />
+                                Export
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 {/* Main Statistics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {mainStats.map((stat, index) => (
-                        <div key={index} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                        <div key={index} className="glass-card p-6 group hover:shadow-lg transition-all duration-300">
                             <div className="flex items-center justify-between mb-4">
-                                <div className={`w-12 h-12 ${stat.color} rounded-lg flex items-center justify-center`}>
+                                <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                                     <stat.icon className="w-6 h-6 text-white" />
                                 </div>
-                                <div className={`flex items-center space-x-1 ${stat.positive ? 'text-green-600' : 'text-red-600'}`}>
+                                <div className={`flex items-center space-x-1 ${stat.positive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                     {stat.positive ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
                                     <span className="text-sm font-medium">{stat.change}</span>
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stat.value}</p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">{stat.title}</p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500">{stat.subtitle}</p>
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {stat.value}
+                                </h3>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {stat.label}
+                                </p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    {stat.subtitle}
+                                </p>
                             </div>
                         </div>
                     ))}
                 </div>
 
-                {/* Progress Overview */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Charts Section */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Completion Progress */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="glass-card p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                Completion Progress
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                                <Target className="w-5 h-5 text-emerald-500" />
+                                <span>Completion Progress</span>
                             </h3>
-                            <Target className="w-5 h-5 text-gray-500" />
+                            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                                {analytics.completionRate.toFixed(1)}%
+                            </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Progress</span>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">{analytics.completionRate.toFixed(1)}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                                <div
-                                    className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full transition-all duration-500"
-                                    style={{ width: `${analytics.completionRate}%` }}
-                                />
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Progress</span>
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{analytics.completionRate.toFixed(1)}%</span>
+                                </div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+                                    <div
+                                        className="bg-gradient-to-r from-emerald-500 to-green-600 h-4 rounded-full transition-all duration-1000 ease-out"
+                                        style={{ width: `${analytics.completionRate}%` }}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 mt-6">
-                                <div className="text-center">
-                                    <div className="w-8 h-8 bg-green-500 rounded-full mx-auto mb-2 flex items-center justify-center">
-                                        <CheckCircle className="w-4 h-4 text-white" />
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="text-center p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                    <div className="w-10 h-10 bg-emerald-500 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                        <CheckCircle className="w-5 h-5 text-white" />
                                     </div>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{analytics.completedVideos}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Completed</p>
+                                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{analytics.completedVideos}</p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">Completed</p>
                                 </div>
-                                <div className="text-center">
-                                    <div className="w-8 h-8 bg-yellow-500 rounded-full mx-auto mb-2 flex items-center justify-center">
-                                        <PlayCircle className="w-4 h-4 text-white" />
+                                <div className="text-center p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20">
+                                    <div className="w-10 h-10 bg-yellow-500 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                        <PlayCircle className="w-5 h-5 text-white" />
                                     </div>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{analytics.inProgressVideos}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">In Progress</p>
+                                    <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{analytics.inProgressVideos}</p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">In Progress</p>
                                 </div>
-                                <div className="text-center">
-                                    <div className="w-8 h-8 bg-gray-400 rounded-full mx-auto mb-2 flex items-center justify-center">
-                                        <Pause className="w-4 h-4 text-white" />
+                                <div className="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+                                    <div className="w-10 h-10 bg-gray-400 rounded-full mx-auto mb-3 flex items-center justify-center">
+                                        <Pause className="w-5 h-5 text-white" />
                                     </div>
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white">{analytics.notStartedVideos}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">Not Started</p>
+                                    <p className="text-xl font-bold text-gray-600 dark:text-gray-400">{analytics.notStartedVideos}</p>
+                                    <p className="text-xs text-gray-600 dark:text-gray-400">Not Started</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Study Time Analysis */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="glass-card p-6">
                         <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                Study Time Analysis
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                                <Clock className="w-5 h-5 text-purple-500" />
+                                <span>Study Time Analysis</span>
                             </h3>
-                            <Clock className="w-5 h-5 text-gray-500" />
+                            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                                {formatDuration(analytics.completedDuration)}
+                            </div>
                         </div>
 
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Completed</span>
-                                <span className="text-sm font-medium text-gray-900 dark:text-white">{formatDuration(analytics.completedDuration)}</span>
-                            </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
-                                <div
-                                    className="bg-gradient-to-r from-purple-500 to-violet-500 h-3 rounded-full transition-all duration-500"
-                                    style={{ width: `${(analytics.completedDuration / analytics.totalDuration) * 100}%` }}
-                                />
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Time Completed</span>
+                                    <span className="text-sm font-bold text-gray-900 dark:text-white">{formatDuration(analytics.completedDuration)}</span>
+                                </div>
+                                <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-4 overflow-hidden">
+                                    <div
+                                        className="bg-gradient-to-r from-purple-500 to-violet-600 h-4 rounded-full transition-all duration-1000 ease-out"
+                                        style={{ width: `${(analytics.completedDuration / analytics.totalDuration) * 100}%` }}
+                                    />
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 mt-6">
-                                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                    <div className="flex items-center space-x-2 mb-2">
-                                        <Timer className="w-4 h-4 text-purple-600" />
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">Avg. Session</span>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
+                                    <div className="flex items-center space-x-3 mb-2">
+                                        <Timer className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Time</span>
                                     </div>
-                                    <p className="text-lg font-bold text-gray-900 dark:text-white">
-                                        {formatDuration(analytics.completedDuration / Math.max(analytics.studyDays, 1))}
+                                    <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                        {formatDuration(analytics.totalDuration)}
                                     </p>
                                 </div>
-                                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                                    <div className="flex items-center space-x-2 mb-2">
-                                        <Calendar className="w-4 h-4 text-orange-600" />
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">Total Days</span>
+                                <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20">
+                                    <div className="flex items-center space-x-3 mb-2">
+                                        <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Remaining</span>
                                     </div>
-                                    <p className="text-lg font-bold text-gray-900 dark:text-white">{analytics.studyDays}</p>
+                                    <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                                        {formatDuration(analytics.totalDuration - analytics.completedDuration)}
+                                    </p>
                                 </div>
                             </div>
                         </div>
