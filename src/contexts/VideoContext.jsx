@@ -454,34 +454,20 @@ export const VideoProvider = ({ children }) => {
         }
 
         setRecentActivities(prev => {
-            // Check for duplicate activities to prevent spam
-            const isDuplicate = prev.some(existingActivity => {
-                // For video progress activities, check if same video and milestone already exists recently (within 5 minutes)
-                if (type === 'video_progress' && existingActivity.type === 'video_progress') {
-                    const timeDiff = new Date(activity.timestamp) - new Date(existingActivity.timestamp)
-                    const withinRecentTime = timeDiff < 5 * 60 * 1000 // 5 minutes
-                    return existingActivity.videoId === data.videoId && 
-                           existingActivity.milestone === data.milestone &&
-                           withinRecentTime
-                }
-                
-                // For other video activities, check if same video and type exists recently (within 1 minute)
-                if (data.videoId && existingActivity.videoId === data.videoId && existingActivity.type === type) {
-                    const timeDiff = new Date(activity.timestamp) - new Date(existingActivity.timestamp)
-                    const withinRecentTime = timeDiff < 1 * 60 * 1000 // 1 minute
-                    return withinRecentTime
-                }
-                
-                return false
-            })
-
-            // If duplicate found, don't add the activity
-            if (isDuplicate) {
-                console.log(`🚫 Skipping duplicate activity: ${type} for ${data.videoTitle || data.videoId}`)
-                return prev
+            // For video-related activities, remove ALL previous activities for the same video
+            // This ensures each video appears only once with its most recent activity
+            let filteredActivities = prev
+            
+            if (data.videoId) {
+                // Remove all previous activities for this video
+                filteredActivities = prev.filter(existingActivity => 
+                    existingActivity.videoId !== data.videoId
+                )
+                console.log(`🧹 Removed previous activities for video: ${data.videoTitle || data.videoId}`)
             }
 
-            const newActivities = [activity, ...prev].slice(0, 50) // Keep last 50 activities
+            // Add the new activity at the beginning
+            const newActivities = [activity, ...filteredActivities].slice(0, 50) // Keep last 50 activities
             console.log(`✅ Added new activity: ${type} for ${data.videoTitle || data.videoId}`)
             return newActivities
         })
@@ -492,29 +478,30 @@ export const VideoProvider = ({ children }) => {
 
     // Clean up duplicate activities from existing data
     const cleanupDuplicateActivities = (activities) => {
-        const seen = new Map()
-        const cleanedActivities = []
+        const videoActivities = new Map() // videoId -> most recent activity
+        const nonVideoActivities = [] // activities without videoId
 
         for (const activity of activities) {
-            // Create a key for duplicate detection
-            let key = `${activity.type}`
-            
             if (activity.videoId) {
-                if (activity.type === 'video_progress') {
-                    key = `${activity.type}_${activity.videoId}_${activity.milestone}`
-                } else {
-                    key = `${activity.type}_${activity.videoId}`
+                // For video activities, keep only the most recent one per video
+                const existing = videoActivities.get(activity.videoId)
+                if (!existing || new Date(activity.timestamp) > new Date(existing.timestamp)) {
+                    videoActivities.set(activity.videoId, activity)
                 }
-            }
-
-            // Only keep the most recent instance of each unique activity
-            if (!seen.has(key) || new Date(activity.timestamp) > new Date(seen.get(key).timestamp)) {
-                seen.set(key, activity)
+            } else {
+                // For non-video activities (like playlist imports), keep them all
+                nonVideoActivities.push(activity)
             }
         }
 
-        // Convert map values back to array and sort by timestamp (newest first)
-        return Array.from(seen.values()).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+        // Combine video activities (one per video) with non-video activities
+        const cleanedActivities = [
+            ...Array.from(videoActivities.values()),
+            ...nonVideoActivities
+        ]
+
+        // Sort by timestamp (newest first)
+        return cleanedActivities.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
     }
 
     const trackCompletedVideo = (videoId) => {
