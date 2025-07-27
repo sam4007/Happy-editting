@@ -30,38 +30,41 @@ function App() {
                     <FriendsProvider>
                         <VideoProvider>
                             <Router>
-                                <Routes>
-                                    {/* Authentication Route */}
-                                    <Route path="/auth" element={<AuthPage />} />
+                                <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 transition-all duration-500">
+                                    <Routes>
+                                        {/* Authentication Route */}
+                                        <Route path="/auth" element={<AuthPage />} />
 
-                                    {/* Protected Routes */}
-                                    <Route path="/*" element={
-                                        <ProtectedRoute>
-                                            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
-                                                <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
-                                                <div className="flex">
-                                                    <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
-                                                    <main className="flex-1 min-h-screen pt-16">
-                                                        <Routes>
-                                                            <Route path="/" element={<Dashboard />} />
-                                                            <Route path="/library" element={<Library />} />
-                                                            <Route path="/video/:id" element={<VideoPlayer />} />
-                                                            <Route path="/analytics" element={<Analytics />} />
-                                                            <Route path="/settings" element={<Settings />} />
-                                                            <Route path="/profile-settings" element={<ProfileSettings />} />
-                                                            <Route path="/account-settings" element={<AccountSettings />} />
-                                                            <Route path="/email-preferences" element={<EmailPreferences />} />
-                                                            <Route path="/friends" element={<Friends />} />
-                                                            <Route path="/messages/:friendId" element={<Messages />} />
-                                                            {/* Redirect any unknown routes to dashboard */}
-                                                            <Route path="*" element={<Navigate to="/" replace />} />
-                                                        </Routes>
-                                                    </main>
+                                        {/* Protected Routes */}
+                                        <Route path="/*" element={
+                                            <ProtectedRoute>
+                                                <div className="min-h-screen">
+                                                    <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+                                                    <div className="flex">
+                                                        <Sidebar open={sidebarOpen} setOpen={setSidebarOpen} />
+                                                        <main className="flex-1 min-h-screen pt-14 lg:ml-64 transition-all duration-300 ease-out">
+                                                            <div className="animate-fade-in">
+                                                                <Routes>
+                                                                    <Route path="/" element={<Dashboard />} />
+                                                                    <Route path="/library" element={<Library />} />
+                                                                    <Route path="/video/:id" element={<VideoPlayer />} />
+                                                                    <Route path="/analytics" element={<Analytics />} />
+                                                                    <Route path="/settings" element={<Settings />} />
+                                                                    <Route path="/profile-settings" element={<ProfileSettings />} />
+                                                                    <Route path="/account-settings" element={<AccountSettings />} />
+                                                                    <Route path="/email-preferences" element={<EmailPreferences />} />
+                                                                    <Route path="/friends" element={<Friends />} />
+                                                                    <Route path="/messages/:friendId" element={<Messages />} />
+                                                                    <Route path="*" element={<Navigate to="/" replace />} />
+                                                                </Routes>
+                                                            </div>
+                                                        </main>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </ProtectedRoute>
-                                    } />
-                                </Routes>
+                                            </ProtectedRoute>
+                                        } />
+                                    </Routes>
+                                </div>
                             </Router>
                         </VideoProvider>
                     </FriendsProvider>

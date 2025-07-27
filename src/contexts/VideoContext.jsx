@@ -24,6 +24,7 @@ export const VideoProvider = ({ children }) => {
     const [bookmarks, setBookmarks] = useState({})
     const [dailyActivity, setDailyActivity] = useState({})
     const [dailyCompletedVideos, setDailyCompletedVideos] = useState({})
+    const [recentActivities, setRecentActivities] = useState([])
     const [isInitialized, setIsInitialized] = useState(false)
 
     // Calculate user stats from current video data
@@ -156,6 +157,7 @@ export const VideoProvider = ({ children }) => {
         const savedBookmarks = localStorage.getItem(getStorageKey('bookmarks'))
         const savedDailyActivity = localStorage.getItem(getStorageKey('dailyActivity'))
         const savedDailyCompletedVideos = localStorage.getItem(getStorageKey('dailyCompletedVideos'))
+        const savedRecentActivities = localStorage.getItem(getStorageKey('recentActivities'))
 
         if (savedVideos) {
             console.log(`📺 Loading videos for user ${user?.uid}:`, JSON.parse(savedVideos).length, 'videos')
@@ -292,6 +294,12 @@ export const VideoProvider = ({ children }) => {
             setDailyCompletedVideos({})
         }
 
+        if (savedRecentActivities) {
+            setRecentActivities(JSON.parse(savedRecentActivities))
+        } else {
+            setRecentActivities([])
+        }
+
         // Set initialized to true after loading
         setIsInitialized(true)
         console.log(`✅ VideoContext initialized for user ${user?.uid || 'guest'}`)
@@ -340,6 +348,11 @@ export const VideoProvider = ({ children }) => {
         if (!isInitialized || !user) return
         localStorage.setItem(getStorageKey('dailyCompletedVideos'), JSON.stringify(dailyCompletedVideos))
     }, [dailyCompletedVideos, isInitialized, user])
+
+    useEffect(() => {
+        if (!isInitialized || !user) return
+        localStorage.setItem(getStorageKey('recentActivities'), JSON.stringify(recentActivities))
+    }, [recentActivities, isInitialized, user])
 
     useEffect(() => {
         if (!isInitialized || !user) return
@@ -393,6 +406,19 @@ export const VideoProvider = ({ children }) => {
                 console.log('🎬 Happy Editting course import flag set')
             }
 
+            // Track bulk import activity
+            if (videoList.length > 0) {
+                const firstVideo = videoList[0]
+                const playlistName = firstVideo.playlistTitle || `${firstVideo.instructor} - ${firstVideo.category}`
+                addRecentActivity('playlist_imported', {
+                    playlistName,
+                    videoCount: videoList.length,
+                    instructor: firstVideo.instructor,
+                    category: firstVideo.category,
+                    source: firstVideo.source || 'manual'
+                })
+            }
+
             // Update user stats in Firestore
             updateUserStatsInFirestore(updatedVideos)
 
@@ -413,6 +439,24 @@ export const VideoProvider = ({ children }) => {
                 [today]: newCount
             }
         })
+    }
+
+    // Track recent activities with detailed information
+    const addRecentActivity = (type, data) => {
+        const activity = {
+            id: Date.now() + Math.random(), // Ensure unique ID
+            type,
+            timestamp: new Date().toISOString(),
+            ...data
+        }
+
+        setRecentActivities(prev => {
+            const newActivities = [activity, ...prev].slice(0, 50) // Keep last 50 activities
+            return newActivities
+        })
+
+        // Also track in daily activity
+        trackDailyActivity(type)
     }
 
     const trackCompletedVideo = (videoId) => {
@@ -444,11 +488,35 @@ export const VideoProvider = ({ children }) => {
             // Track completed video if it's newly completed
             if (updates.completed && !oldVideo?.completed) {
                 trackCompletedVideo(id)
+                // Add to recent activities
+                addRecentActivity('video_completed', {
+                    videoId: id,
+                    videoTitle: oldVideo.title,
+                    instructor: oldVideo.instructor,
+                    category: oldVideo.category,
+                    duration: oldVideo.duration
+                })
             }
 
-            // Track activity when video is completed or progress is made
-            if (updates.completed || updates.progress) {
-                trackDailyActivity('video_interaction')
+            // Track significant progress updates (but not completion as it's tracked above)
+            if (updates.progress && !updates.completed) {
+                const oldProgress = oldVideo?.progress || 0
+                const newProgress = updates.progress
+
+                // Track every 25% progress milestone
+                const oldMilestone = Math.floor(oldProgress / 25)
+                const newMilestone = Math.floor(newProgress / 25)
+
+                if (newMilestone > oldMilestone && newMilestone > 0) {
+                    addRecentActivity('video_progress', {
+                        videoId: id,
+                        videoTitle: oldVideo.title,
+                        instructor: oldVideo.instructor,
+                        category: oldVideo.category,
+                        progress: newProgress,
+                        milestone: newMilestone * 25
+                    })
+                }
             }
 
             // Update user stats in Firestore
@@ -469,14 +537,29 @@ export const VideoProvider = ({ children }) => {
 
     const toggleFavorite = (videoId) => {
         console.log('🌟 Toggle favorite for video:', videoId)
+        const video = videos.find(v => v.id === videoId)
+
         setFavorites(prev => {
-            const newFavorites = prev.includes(videoId)
+            const wasAlreadyFavorite = prev.includes(videoId)
+            const newFavorites = wasAlreadyFavorite
                 ? prev.filter(id => id !== videoId)
                 : [...prev, videoId]
 
-            // Track activity when adding to favorites (engagement indicator)
-            if (!prev.includes(videoId)) {
-                trackDailyActivity('favorite_added')
+            // Track activity when adding to favorites
+            if (!wasAlreadyFavorite && video) {
+                addRecentActivity('favorite_added', {
+                    videoId,
+                    videoTitle: video.title,
+                    instructor: video.instructor,
+                    category: video.category
+                })
+            } else if (wasAlreadyFavorite && video) {
+                addRecentActivity('favorite_removed', {
+                    videoId,
+                    videoTitle: video.title,
+                    instructor: video.instructor,
+                    category: video.category
+                })
             }
 
             console.log('🌟 New favorites:', newFavorites)
@@ -485,6 +568,8 @@ export const VideoProvider = ({ children }) => {
     }
 
     const addToWatchHistory = (videoId) => {
+        const video = videos.find(v => v.id === videoId)
+
         setWatchHistory(prev => {
             const filtered = prev.filter(id => id !== videoId)
             const newHistory = [videoId, ...filtered].slice(0, 20) // Keep last 20 watched videos
@@ -492,8 +577,14 @@ export const VideoProvider = ({ children }) => {
             // Only track activity if this video wasn't already in recent history
             const wasRecentlyWatched = prev.slice(0, 3).includes(videoId) // Check last 3 videos
 
-            if (!wasRecentlyWatched) {
-                trackDailyActivity('video_watched')
+            if (!wasRecentlyWatched && video) {
+                addRecentActivity('video_watched', {
+                    videoId,
+                    videoTitle: video.title,
+                    instructor: video.instructor,
+                    category: video.category,
+                    duration: video.duration
+                })
             }
 
             return newHistory
@@ -501,6 +592,8 @@ export const VideoProvider = ({ children }) => {
     }
 
     const addNote = (videoId, timestamp, note) => {
+        const video = videos.find(v => v.id === videoId)
+
         setNotes(prev => {
             const newNotes = {
                 ...prev,
@@ -511,7 +604,16 @@ export const VideoProvider = ({ children }) => {
             }
 
             // Track note-taking as learning engagement
-            trackDailyActivity('note_added')
+            if (video) {
+                addRecentActivity('note_added', {
+                    videoId,
+                    videoTitle: video.title,
+                    instructor: video.instructor,
+                    category: video.category,
+                    notePreview: note.substring(0, 50) + (note.length > 50 ? '...' : ''),
+                    timestamp
+                })
+            }
 
             return newNotes
         })
@@ -519,6 +621,8 @@ export const VideoProvider = ({ children }) => {
 
     const addBookmark = (videoId, timestamp, title) => {
         console.log('📌 Adding bookmark for video:', videoId, 'title:', title)
+        const video = videos.find(v => v.id === videoId)
+
         setBookmarks(prev => {
             const newBookmarks = {
                 ...prev,
@@ -529,7 +633,16 @@ export const VideoProvider = ({ children }) => {
             }
 
             // Track bookmarking as learning engagement
-            trackDailyActivity('bookmark_added')
+            if (video) {
+                addRecentActivity('bookmark_added', {
+                    videoId,
+                    videoTitle: video.title,
+                    instructor: video.instructor,
+                    category: video.category,
+                    bookmarkTitle: title,
+                    timestamp
+                })
+            }
 
             console.log('📌 New bookmarks:', newBookmarks)
             return newBookmarks
@@ -764,6 +877,7 @@ export const VideoProvider = ({ children }) => {
         bookmarks,
         dailyActivity,
         dailyCompletedVideos,
+        recentActivities,
         filteredVideos,
         addVideo,
         addBulkVideos,
