@@ -459,7 +459,7 @@ ${filteredVideos.map(video => {
                 {/* Main Statistics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {mainStats.map((stat, index) => (
-                        <div key={index} className="glass-card p-6 group hover:shadow-lg transition-all duration-300">
+                        <div key={index} className="glass-card-frosted p-6 group hover:shadow-lg transition-all duration-300">
                             <div className="flex items-center justify-between mb-4">
                                 <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                                     <stat.icon className="w-6 h-6 text-white" />
@@ -487,7 +487,7 @@ ${filteredVideos.map(video => {
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Completion Progress */}
-                    <div className="glass-card p-6">
+                    <div className="glass-card-frosted p-6">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                                 <Target className="w-5 h-5 text-emerald-500" />
@@ -539,7 +539,7 @@ ${filteredVideos.map(video => {
                     </div>
 
                     {/* Study Time Analysis */}
-                    <div className="glass-card p-6">
+                    <div className="glass-card-frosted p-6">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                                 <Clock className="w-5 h-5 text-purple-500" />

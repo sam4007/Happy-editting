@@ -319,7 +319,7 @@ const Dashboard = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {/* Total Videos */}
-                <div className="glass-card p-6 group">
+                <div className="glass-card-frosted p-6 group">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
                             <BookOpen className="w-6 h-6 text-white" />
@@ -336,7 +336,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Completed */}
-                <div className="glass-card p-6 group">
+                <div className="glass-card-frosted p-6 group">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg">
                             <CheckCircle className="w-6 h-6 text-white" />
@@ -353,7 +353,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Watch Time */}
-                <div className="glass-card p-6 group">
+                <div className="glass-card-frosted p-6 group">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
                             <Clock className="w-6 h-6 text-white" />
@@ -369,20 +369,20 @@ const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Current Streak */}
-                <div className="glass-card p-6 group">
+                {/* Day Streak */}
+                <div className="glass-card-frosted p-6 group">
                     <div className="flex items-center justify-between mb-4">
                         <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg">
                             <Target className="w-6 h-6 text-white" />
                         </div>
-                        <TrendingUp className="w-5 h-5 text-green-500" />
+                        <Award className="w-5 h-5 text-orange-500" />
                     </div>
                     <div>
                         <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
                             7
                         </h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">Day Streak</p>
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">Keep it up!</p>
+                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">Keep it up!</p>
                     </div>
                 </div>
             </div>
@@ -391,7 +391,7 @@ const Dashboard = () => {
             {allCourses.length > 0 && (
                 <div className="mb-8">
                     <div
-                        className="glass-card p-8 group relative overflow-hidden cursor-grab active:cursor-grabbing"
+                        className="glass-card-frosted p-8 group relative overflow-hidden cursor-grab active:cursor-grabbing"
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
@@ -511,7 +511,7 @@ const Dashboard = () => {
             {/* Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Recent Activity */}
-                <div className="glass-card p-6">
+                <div className="glass-card-frosted p-6">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                             <Clock className="w-5 h-5 text-indigo-500" />
@@ -563,7 +563,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Favorites */}
-                <div className="glass-card p-6">
+                <div className="glass-card-frosted p-6">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                             <Star className="w-5 h-5 text-yellow-500" />
@@ -608,7 +608,7 @@ const Dashboard = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="glass-card p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-200/50 dark:border-indigo-800/50">
+            <div className="glass-card-frosted p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-200/50 dark:border-indigo-800/50">
                 <div className="flex items-center justify-between">
                     <div className="flex-1">
                         <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
