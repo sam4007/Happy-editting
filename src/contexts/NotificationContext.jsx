@@ -15,7 +15,7 @@ export const NotificationProvider = ({ children }) => {
         {
             id: 1,
             type: 'achievement',
-            title: 'Welcome to Happy Editing!',
+            title: 'Welcome to Lumière!',
             message: 'You\'ve successfully set up your account. Start your learning journey!',
             time: new Date().toISOString(),
             read: false,

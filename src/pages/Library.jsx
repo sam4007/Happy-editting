@@ -358,7 +358,7 @@ const Library = () => {
                     selectedCategory === 'Video Editing' ? (
                         <CourseLayout
                             videos={sortedVideos}
-                            courseName="Happy Editting"
+                            courseName="Lumière Course"
                         />
                     ) : (
                         <div className="space-y-4 max-w-full overflow-hidden">

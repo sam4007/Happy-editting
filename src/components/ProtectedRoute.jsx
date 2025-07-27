@@ -18,7 +18,7 @@ const ProtectedRoute = ({ children }) => {
                     </div>
                     <div className="flex items-center justify-center space-x-2">
                         <Loader2 className="w-5 h-5 animate-spin text-blue-500" />
-                        <span className="text-lg text-gray-600 dark:text-gray-400">Loading Happy Editing...</span>
+                        <span className="text-lg text-gray-600 dark:text-gray-400">Loading Lumière...</span>
                     </div>
                     <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
                         Please wait while we set up your learning environment

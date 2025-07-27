@@ -111,7 +111,7 @@ const SignupForm = ({ onSwitchToLogin }) => {
                         Create Your Account
                     </h2>
                     <p className="mt-2 text-gray-600 dark:text-gray-400">
-                        Join thousands of learners on Happy Editing
+                        Join thousands of learners on Lumière
                     </p>
                 </div>
 
