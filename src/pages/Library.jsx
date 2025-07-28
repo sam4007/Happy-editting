@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Filter, ChevronDown, Plus, SortAsc, SortDesc, Download, Play, CheckCircle, Clock, Star, Youtube, Tag, FolderOpen, X, Search, Grid, List } from 'lucide-react'
+import { Filter, ChevronDown, Plus, SortAsc, SortDesc, Download, Play, CheckCircle, Circle, Clock, Star, Youtube, Tag, FolderOpen, X, Search, Grid, List } from 'lucide-react'
 import { useVideo } from '../contexts/VideoContext'
 import { useNavigate, useLocation } from 'react-router-dom'
 import AddVideoModal from '../components/AddVideoModal'
@@ -7,6 +7,7 @@ import CourseImporter from '../components/CourseImporter'
 import PlaylistImportModal from '../components/PlaylistImportModal'
 import CategoryManager from '../components/CategoryManager'
 import PlaylistManager from '../components/PlaylistManager'
+import CustomSelect from '../components/CustomSelect'
 
 // Helper function to format video titles with proper line breaks
 const formatVideoTitle = (title) => {
@@ -46,6 +47,7 @@ const Library = () => {
     const location = useLocation()
     const [sortBy, setSortBy] = useState('recent')
     const [sortOrder, setSortOrder] = useState('desc')
+    const [categoryFilter, setCategoryFilter] = useState('All')
     const [showAddModal, setShowAddModal] = useState(false)
     const [showCourseImporter, setShowCourseImporter] = useState(false)
     const [showPlaylistImporter, setShowPlaylistImporter] = useState(false)
@@ -71,7 +73,14 @@ const Library = () => {
     // Clear filter function
     const clearFilter = () => {
         setActiveFilter(null)
-        navigate('/library')
+        navigate('/library', { replace: true })
+    }
+
+    // Calculate completion percentage for a section
+    const calculateSectionProgress = (sectionVideos) => {
+        const completedVideos = sectionVideos.filter(video => video.completed).length
+        const totalVideos = sectionVideos.length
+        return totalVideos > 0 ? (completedVideos / totalVideos) * 100 : 0
     }
 
     // Get filtered videos based on active filter
@@ -82,6 +91,11 @@ const Library = () => {
             videosToShow = filteredVideos.filter(video => favorites.includes(video.id))
         } else if (activeFilter === 'watch-history') {
             videosToShow = watchHistory.map(id => videos.find(v => v.id === id)).filter(Boolean)
+        }
+
+        // Apply category filter
+        if (categoryFilter && categoryFilter !== 'All') {
+            videosToShow = videosToShow.filter(video => video.category === categoryFilter)
         }
 
         // Apply search filter
@@ -151,6 +165,7 @@ const Library = () => {
     const sortedVideos = [...displayVideos].sort((a, b) => {
         let comparison = 0
 
+        // Default to sorting by recent (upload date)
         switch (sortBy) {
             case 'title':
                 comparison = a.title.localeCompare(b.title)
@@ -158,8 +173,11 @@ const Library = () => {
             case 'duration':
                 const getDurationMinutes = (duration) => {
                     if (!duration) return 0
-                    const parts = duration.split(':').map(Number)
-                    return parts.length === 2 ? parts[0] + parts[1] / 60 : parts[0] * 60 + parts[1] + parts[2] / 60
+                    const parts = duration.split(':')
+                    if (parts.length === 2) {
+                        return parseInt(parts[0]) * 60 + parseInt(parts[1])
+                    }
+                    return 0
                 }
                 comparison = getDurationMinutes(a.duration) - getDurationMinutes(b.duration)
                 break
@@ -169,11 +187,11 @@ const Library = () => {
             case 'rating':
                 comparison = (a.rating || 0) - (b.rating || 0)
                 break
-            default: // recent
-                if (activeFilter === 'watch-history') {
-                    const aIndex = watchHistory.indexOf(a.id)
-                    const bIndex = watchHistory.indexOf(b.id)
-                    comparison = aIndex - bIndex
+            default: // 'recent'
+                if (a.uploadDate && b.uploadDate) {
+                    comparison = new Date(b.uploadDate) - new Date(a.uploadDate)
+                } else if (a.addedDate && b.addedDate) {
+                    comparison = new Date(b.addedDate) - new Date(a.addedDate)
                 } else {
                     comparison = new Date(a.uploadDate) - new Date(b.uploadDate)
                 }
@@ -183,14 +201,6 @@ const Library = () => {
     })
 
     const groupedVideos = groupVideosByPlaylist(sortedVideos)
-
-    const sortOptions = [
-        { value: 'recent', label: 'Recently Added' },
-        { value: 'title', label: 'Title' },
-        { value: 'duration', label: 'Duration' },
-        { value: 'progress', label: 'Progress' },
-        { value: 'rating', label: 'Rating' }
-    ]
 
     return (
         <div className="min-h-screen animate-fade-in">
@@ -279,20 +289,21 @@ const Library = () => {
                             </div>
 
                             <div className="flex items-center gap-4">
-                                {/* Sort Controls */}
+                                {/* Category Filter */}
                                 <div className="flex items-center space-x-3">
-                                    <select
-                                        value={sortBy}
-                                        onChange={(e) => setSortBy(e.target.value)}
-                                        className="input-premium text-sm min-w-0"
-                                    >
-                                        {sortOptions.map(option => (
-                                            <option key={option.value} value={option.value}>
-                                                {option.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Category:</span>
+                                    <CustomSelect
+                                        value={categoryFilter}
+                                        onChange={(e) => setCategoryFilter(e.target.value)}
+                                        options={categories}
+                                        className="min-w-[120px]"
+                                        placeholder="All Categories"
+                                    />
+                                </div>
 
+                                {/* Sort Order */}
+                                <div className="flex items-center space-x-3">
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort:</span>
                                     <button
                                         onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
                                         className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
@@ -328,6 +339,9 @@ const Library = () => {
                                 </div>
                             </div>
                         </div>
+
+                        {/* Bulk Selection Controls */}
+                        {/* Removed bulk selection controls as checkboxes handle selection */}
                     </div>
                 </div>
 
@@ -337,6 +351,8 @@ const Library = () => {
                         {Object.entries(groupedVideos).map(([sectionTitle, sectionVideos]) => {
                             const sectionKey = sectionTitle.replace(/\s+/g, '_').toLowerCase()
                             const isExpanded = expandedSections[sectionKey] === true
+                            const progressPercentage = calculateSectionProgress(sectionVideos)
+                            const completedCount = sectionVideos.filter(video => video.completed).length
 
                             return (
                                 <div key={sectionTitle} className="glass-card overflow-hidden">
@@ -351,12 +367,26 @@ const Library = () => {
                                                     {sectionTitle}
                                                 </h3>
                                                 <span className="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                                                    {sectionVideos.length} video{sectionVideos.length !== 1 ? 's' : ''}
+                                                    {completedCount}/{sectionVideos.length} completed
                                                 </span>
                                             </div>
                                             <ChevronDown className={`w-5 h-5 text-gray-500 dark:text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''
                                                 }`} />
                                         </button>
+
+                                        {/* Progress Bar */}
+                                        <div className="mt-3">
+                                            <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                                <span>Course Progress</span>
+                                                <span>{Math.round(progressPercentage)}%</span>
+                                            </div>
+                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                <div
+                                                    className="bg-gradient-to-r from-indigo-500 to-blue-500 h-2 rounded-full transition-all duration-500 ease-out"
+                                                    style={{ width: `${progressPercentage}%` }}
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Videos Grid/List */}
@@ -364,12 +394,35 @@ const Library = () => {
                                         <div className="p-6">
                                             {viewMode === 'grid' ? (
                                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                                    {sectionVideos.map((video) => (
+                                                    {sectionVideos.map((video, index) => (
                                                         <div
                                                             key={video.id}
-                                                            className="group cursor-pointer"
+                                                            className="group cursor-pointer relative"
                                                             onClick={() => handleVideoClick(video)}
                                                         >
+                                                            {/* Video Number */}
+                                                            <div className="absolute top-2 left-2 z-20 bg-black/60 text-white text-xs font-medium px-2 py-1 rounded-md backdrop-blur-sm">
+                                                                {index + 1}
+                                                            </div>
+
+                                                            {/* Checkbox */}
+                                                            <div className="absolute top-2 right-2 z-10">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        updateVideo(video.id, { completed: !video.completed })
+                                                                    }}
+                                                                    className="flex-shrink-0 p-1"
+                                                                >
+                                                                    {video.completed ? (
+                                                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                                                    ) : (
+                                                                        <Circle className="w-5 h-5 text-gray-400 hover:text-green-500 transition-colors" />
+                                                                    )}
+                                                                </button>
+                                                            </div>
+
                                                             <div className="glass-card p-4 h-full hover:scale-[1.02] transition-transform">
                                                                 {/* Video Thumbnail */}
                                                                 <div className="relative mb-4 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 aspect-video">
@@ -417,12 +470,35 @@ const Library = () => {
                                                 </div>
                                             ) : (
                                                 <div className="space-y-3">
-                                                    {sectionVideos.map((video) => (
+                                                    {sectionVideos.map((video, index) => (
                                                         <div
                                                             key={video.id}
                                                             className="flex items-center space-x-4 p-4 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group"
                                                             onClick={() => handleVideoClick(video)}
                                                         >
+                                                            {/* Video Number */}
+                                                            <div className="flex-shrink-0 w-8 h-8 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-full flex items-center justify-center">
+                                                                {index + 1}
+                                                            </div>
+
+                                                            {/* Checkbox */}
+                                                            <div className="flex-shrink-0">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={(e) => {
+                                                                        e.stopPropagation()
+                                                                        updateVideo(video.id, { completed: !video.completed })
+                                                                    }}
+                                                                    className="flex-shrink-0 p-1"
+                                                                >
+                                                                    {video.completed ? (
+                                                                        <CheckCircle className="w-5 h-5 text-green-500" />
+                                                                    ) : (
+                                                                        <Circle className="w-5 h-5 text-gray-400 hover:text-green-500 transition-colors" />
+                                                                    )}
+                                                                </button>
+                                                            </div>
+
                                                             {/* Thumbnail */}
                                                             <div className="w-16 h-10 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-lg flex items-center justify-center flex-shrink-0">
                                                                 <Play className="w-4 h-4 text-gray-400 group-hover:text-indigo-500 transition-colors" />
@@ -452,27 +528,17 @@ const Library = () => {
                                                             {/* Progress */}
                                                             {video.progress > 0 && (
                                                                 <div className="hidden sm:flex items-center space-x-2 flex-shrink-0">
-                                                                    <div className="w-12 bg-gray-200 dark:bg-gray-600 rounded-full h-1.5">
+                                                                    <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
                                                                         <div
-                                                                            className="bg-indigo-500 rounded-full h-1.5 transition-all"
+                                                                            className="bg-indigo-500 h-1.5 rounded-full transition-all"
                                                                             style={{ width: `${video.progress}%` }}
                                                                         />
                                                                     </div>
-                                                                    <span className="text-xs text-gray-500 dark:text-gray-400 w-8 text-right">
+                                                                    <span className="text-xs text-gray-500 dark:text-gray-400 min-w-[3rem]">
                                                                         {video.progress}%
                                                                     </span>
                                                                 </div>
                                                             )}
-
-                                                            {/* Status Icons */}
-                                                            <div className="flex items-center space-x-2 flex-shrink-0">
-                                                                {video.completed && (
-                                                                    <CheckCircle className="w-4 h-4 text-green-500" />
-                                                                )}
-                                                                {favorites.includes(video.id) && (
-                                                                    <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                                                                )}
-                                                            </div>
                                                         </div>
                                                     ))}
                                                 </div>
