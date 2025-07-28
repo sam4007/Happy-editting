@@ -72,10 +72,12 @@ const LoginForm = ({ onSwitchToSignup, onForgotPassword }) => {
         <div className="space-y-6">
             {/* Error/Success Messages */}
             {(localError || error) && (
-                <div className="p-4 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50">
-                    <div className="flex items-center space-x-2">
-                        <AlertCircle className="w-5 h-5 text-red-500" />
-                        <p className="text-sm text-red-700 dark:text-red-400">
+                <div className="p-4 rounded-2xl bg-red-50/80 dark:bg-red-900/20 border border-red-200/50 dark:border-red-800/30 backdrop-blur-sm animate-fade-in">
+                    <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                            <AlertCircle className="w-5 h-5 text-red-500" />
+                        </div>
+                        <p className="text-sm text-red-700 dark:text-red-400 font-medium">
                             {localError || error}
                         </p>
                     </div>
@@ -83,10 +85,12 @@ const LoginForm = ({ onSwitchToSignup, onForgotPassword }) => {
             )}
 
             {success && (
-                <div className="p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800/50">
-                    <div className="flex items-center space-x-2">
-                        <CheckCircle className="w-5 h-5 text-green-500" />
-                        <p className="text-sm text-green-700 dark:text-green-400">
+                <div className="p-4 rounded-2xl bg-green-50/80 dark:bg-green-900/20 border border-green-200/50 dark:border-green-800/30 backdrop-blur-sm animate-fade-in">
+                    <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                        </div>
+                        <p className="text-sm text-green-700 dark:text-green-400 font-medium">
                             {success}
                         </p>
                     </div>
@@ -98,19 +102,19 @@ const LoginForm = ({ onSwitchToSignup, onForgotPassword }) => {
                 type="button"
                 onClick={handleGoogleSignIn}
                 disabled={isLoading}
-                className="btn-secondary w-full flex items-center justify-center space-x-3"
+                className="btn-secondary w-full flex items-center justify-center space-x-3 py-4"
             >
                 <Chrome className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <span>Continue with Google</span>
+                <span className="font-medium">Continue with Google</span>
             </button>
 
             {/* Divider */}
-            <div className="relative">
+            <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+                    <div className="w-full border-t border-gray-300 dark:border-gray-600 opacity-50" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white dark:bg-gray-950 text-gray-500 dark:text-gray-400">
+                    <span className="px-4 py-1 bg-white/90 dark:bg-slate-900/90 text-gray-500 dark:text-gray-400 rounded-full backdrop-blur-sm border border-white/50 dark:border-gray-700/50">
                         Or continue with email
                     </span>
                 </div>
@@ -119,54 +123,58 @@ const LoginForm = ({ onSwitchToSignup, onForgotPassword }) => {
             {/* Login Form */}
             <form className="space-y-6" onSubmit={handleSubmit}>
                 {/* Email Input */}
-                <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="space-y-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Email Address
                     </label>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Mail className="w-4 h-4 text-gray-400" />
+                        <div className="flex items-center input-premium py-4 group">
+                            <div className="flex items-center justify-center w-10 flex-shrink-0">
+                                <Mail className="w-4 h-4 text-gray-400 transition-colors group-focus-within:text-indigo-500" />
+                            </div>
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                required
+                                value={formData.email}
+                                onChange={handleChange}
+                                className="flex-1 bg-transparent border-none outline-none placeholder-gray-400 text-gray-900 dark:text-white"
+                                placeholder="Enter your email"
+                            />
                         </div>
-                        <input
-                            id="email"
-                            name="email"
-                            type="email"
-                            required
-                            value={formData.email}
-                            onChange={handleChange}
-                            className="input-premium pl-12"
-                            placeholder="Enter your email"
-                        />
                     </div>
                 </div>
 
                 {/* Password Input */}
-                <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="space-y-2">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                         Password
                     </label>
                     <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Lock className="w-4 h-4 text-gray-400" />
-                        </div>
-                        <input
-                            id="password"
-                            name="password"
-                            type={showPassword ? 'text' : 'password'}
-                            required
-                            value={formData.password}
-                            onChange={handleChange}
-                            className="input-premium pl-12 pr-12"
-                            placeholder="Enter your password"
-                        />
-                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 focus:outline-none transition-colors"
-                            >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            </button>
+                        <div className="flex items-center input-premium py-4 group">
+                            <div className="flex items-center justify-center w-10 flex-shrink-0">
+                                <Lock className="w-4 h-4 text-gray-400 transition-colors group-focus-within:text-indigo-500" />
+                            </div>
+                            <input
+                                id="password"
+                                name="password"
+                                type={showPassword ? 'text' : 'password'}
+                                required
+                                value={formData.password}
+                                onChange={handleChange}
+                                className="flex-1 bg-transparent border-none outline-none placeholder-gray-400 text-gray-900 dark:text-white"
+                                placeholder="Enter your password"
+                            />
+                            <div className="flex items-center justify-center w-10 flex-shrink-0">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 focus:outline-none transition-colors duration-200 p-1"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -176,7 +184,7 @@ const LoginForm = ({ onSwitchToSignup, onForgotPassword }) => {
                     <button
                         type="button"
                         onClick={onForgotPassword}
-                        className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 focus:outline-none transition-colors"
+                        className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 focus:outline-none transition-colors duration-200 hover:underline font-medium"
                     >
                         Forgot your password?
                     </button>
@@ -186,10 +194,13 @@ const LoginForm = ({ onSwitchToSignup, onForgotPassword }) => {
                 <button
                     type="submit"
                     disabled={isLoading}
-                    className="btn-primary w-full"
+                    className="btn-primary w-full py-4 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <span>{isLoading ? 'Signing in...' : 'Sign In'}</span>
                     {!isLoading && <ArrowRight className="w-4 h-4 ml-2" />}
+                    {isLoading && (
+                        <div className="w-4 h-4 ml-2 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    )}
                 </button>
             </form>
         </div>

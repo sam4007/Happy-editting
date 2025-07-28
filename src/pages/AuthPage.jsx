@@ -46,34 +46,34 @@ const AuthPage = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-6 relative">
-            {/* Background Pattern */}
+        <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden">
+            {/* Enhanced Background */}
             <div className="absolute inset-0 -z-10">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900"></div>
+                {/* Dynamic Gradient Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-slate-900 dark:via-blue-950 dark:to-indigo-950"></div>
+
+                {/* Animated Gradient Orbs */}
+                <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-gradient-to-r from-blue-400/30 to-purple-500/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
+                <div className="absolute top-3/4 right-1/4 w-96 h-96 bg-gradient-to-r from-purple-400/30 to-pink-500/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-1000"></div>
+                <div className="absolute bottom-1/4 left-1/3 w-96 h-96 bg-gradient-to-r from-indigo-400/30 to-blue-500/30 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-2000"></div>
+
+                {/* Subtle Grid Pattern */}
                 <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.05]" style={{
-                    backgroundImage: `radial-gradient(circle at 1px 1px, rgba(0,0,0,0.15) 1px, transparent 0)`,
-                    backgroundSize: '20px 20px'
+                    backgroundImage: `radial-gradient(circle at 1px 1px, rgba(99, 102, 241, 0.3) 1px, transparent 0)`,
+                    backgroundSize: '24px 24px'
                 }}></div>
+
+                {/* Floating Particles */}
+                <div className="absolute inset-0">
+                    <div className="absolute top-1/2 left-1/2 w-2 h-2 bg-blue-400/20 rounded-full animate-float"></div>
+                    <div className="absolute top-1/3 left-1/3 w-1 h-1 bg-purple-400/20 rounded-full animate-float-delayed"></div>
+                    <div className="absolute top-2/3 right-1/3 w-1.5 h-1.5 bg-indigo-400/20 rounded-full animate-float-slow"></div>
+                </div>
             </div>
 
-            <div className="w-full max-w-md">
-                {/* Header */}
-                <div className="text-center mb-8">
-                    <div className="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto mb-6 flex items-center justify-center shadow-xl">
-                        <span className="text-2xl font-bold text-white">L</span>
-                    </div>
-                    <h1 className="text-3xl font-light text-gray-900 dark:text-white mb-2">
-                        Welcome to Lumière
-                    </h1>
-                    <p className="text-gray-600 dark:text-gray-400">
-                        {currentView === 'login' && 'Sign in to your account'}
-                        {currentView === 'signup' && 'Create your learning journey'}
-                        {currentView === 'forgot-password' && 'Reset your password'}
-                    </p>
-                </div>
-
+            <div className="w-full max-w-md relative">
                 {/* Auth Forms */}
-                <div className="glass-card p-8 mb-6">
+                <div className="glass-card-frosted p-8 mb-6 animate-slide-up">
                     {currentView === 'login' && (
                         <LoginForm
                             onSwitchToSignup={handleSwitchToSignup}
@@ -93,16 +93,16 @@ const AuthPage = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="text-center">
+                <div className="text-center animate-fade-in">
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                         {currentView === 'login' && (
                             <>
                                 Don't have an account?{' '}
                                 <button
                                     onClick={handleSwitchToSignup}
-                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
+                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors hover:underline"
                                 >
-                                    Sign up
+                                    Sign up here
                                 </button>
                             </>
                         )}
@@ -111,7 +111,7 @@ const AuthPage = () => {
                                 Already have an account?{' '}
                                 <button
                                     onClick={handleSwitchToLogin}
-                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
+                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors hover:underline"
                                 >
                                     Sign in
                                 </button>
@@ -122,7 +122,7 @@ const AuthPage = () => {
                                 Remember your password?{' '}
                                 <button
                                     onClick={handleBackToLogin}
-                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors"
+                                    className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 font-medium transition-colors hover:underline"
                                 >
                                     Sign in
                                 </button>

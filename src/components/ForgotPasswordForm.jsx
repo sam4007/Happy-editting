@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Mail, ArrowLeft, Send, AlertCircle, CheckCircle, BookOpen } from 'lucide-react'
+import { Mail, ArrowLeft, AlertCircle, CheckCircle } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 
 const ForgotPasswordForm = ({ onBackToLogin }) => {
@@ -20,19 +20,19 @@ const ForgotPasswordForm = ({ onBackToLogin }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault()
-
-        if (!email.trim()) {
-            setLocalError('Email address is required')
-            return
-        }
-
         setIsLoading(true)
         setLocalError('')
         setSuccess('')
 
+        if (!email.trim()) {
+            setLocalError('Email is required')
+            setIsLoading(false)
+            return
+        }
+
         try {
             await resetPassword(email)
-            setSuccess('Password reset email sent! Please check your inbox and follow the instructions.')
+            setSuccess('Password reset email sent! Check your inbox for instructions.')
         } catch (error) {
             console.error('Password reset error:', error)
             setLocalError(error.message || 'Failed to send password reset email. Please try again.')
@@ -41,51 +41,66 @@ const ForgotPasswordForm = ({ onBackToLogin }) => {
         }
     }
 
-    const displayError = localError || error
-
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-white to-pink-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-4">
-            <div className="max-w-md w-full space-y-8">
-                {/* Header */}
-                <div className="text-center">
-                    <div className="flex justify-center mb-4">
-                        <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-3 rounded-full">
-                            <BookOpen className="w-8 h-8 text-white" />
+        <div className="space-y-6">
+            {/* Back to Login */}
+            <button
+                type="button"
+                onClick={onBackToLogin}
+                className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200"
+            >
+                <ArrowLeft className="w-4 h-4" />
+                <span>Back to sign in</span>
+            </button>
+
+            {/* Header */}
+            <div className="text-center">
+                <h2 className="text-2xl font-light text-gray-900 dark:text-white mb-2">
+                    Reset your password
+                </h2>
+                <p className="text-gray-600 dark:text-gray-400">
+                    Enter your email address and we'll send you a link to reset your password.
+                </p>
+            </div>
+
+            {/* Error/Success Messages */}
+            {(localError || error) && (
+                <div className="p-4 rounded-2xl bg-red-50/80 dark:bg-red-900/20 border border-red-200/50 dark:border-red-800/30 backdrop-blur-sm animate-fade-in">
+                    <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                            <AlertCircle className="w-5 h-5 text-red-500" />
                         </div>
+                        <p className="text-sm text-red-700 dark:text-red-400 font-medium">
+                            {localError || error}
+                        </p>
                     </div>
-                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
-                        Reset Your Password
-                    </h2>
-                    <p className="mt-2 text-gray-600 dark:text-gray-400">
-                        Enter your email address and we'll send you a link to reset your password
-                    </p>
                 </div>
+            )}
 
-                {/* Error/Success Messages */}
-                {displayError && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-center space-x-2">
-                        <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
-                        <span className="text-sm text-red-700 dark:text-red-300">{displayError}</span>
+            {success && (
+                <div className="p-4 rounded-2xl bg-green-50/80 dark:bg-green-900/20 border border-green-200/50 dark:border-green-800/30 backdrop-blur-sm animate-fade-in">
+                    <div className="flex items-center space-x-3">
+                        <div className="flex-shrink-0">
+                            <CheckCircle className="w-5 h-5 text-green-500" />
+                        </div>
+                        <p className="text-sm text-green-700 dark:text-green-400 font-medium">
+                            {success}
+                        </p>
                     </div>
-                )}
+                </div>
+            )}
 
-                {success && (
-                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 flex items-center space-x-2">
-                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                        <span className="text-sm text-green-700 dark:text-green-300">{success}</span>
-                    </div>
-                )}
-
-                {/* Reset Password Form */}
-                <form className="space-y-6" onSubmit={handleSubmit}>
-                    {/* Email Input */}
-                    <div>
-                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Email Address
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <Mail className="h-5 w-5 text-gray-400" />
+            {/* Reset Form */}
+            <form className="space-y-6" onSubmit={handleSubmit}>
+                {/* Email Input */}
+                <div className="space-y-2">
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email Address
+                    </label>
+                    <div className="relative">
+                        <div className="flex items-center input-premium py-4 group">
+                            <div className="flex items-center justify-center w-10 flex-shrink-0">
+                                <Mail className="w-4 h-4 text-gray-400 transition-colors group-focus-within:text-indigo-500" />
                             </div>
                             <input
                                 id="email"
@@ -94,48 +109,42 @@ const ForgotPasswordForm = ({ onBackToLogin }) => {
                                 required
                                 value={email}
                                 onChange={handleChange}
-                                className="block w-full pl-10 pr-3 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-                                placeholder="Enter your email address"
+                                className="flex-1 bg-transparent border-none outline-none placeholder-gray-400 text-gray-900 dark:text-white"
+                                placeholder="Enter your email"
                             />
                         </div>
                     </div>
+                </div>
 
-                    {/* Send Reset Email Button */}
-                    <button
-                        type="submit"
-                        disabled={isLoading}
-                        className="w-full flex items-center justify-center space-x-2 py-3 px-4 border border-transparent rounded-lg shadow-sm text-white bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
-                    >
-                        <span className="font-medium">
-                            {isLoading ? 'Sending...' : 'Send Reset Email'}
-                        </span>
-                        {!isLoading && <Send className="w-4 h-4" />}
-                    </button>
+                {/* Submit Button */}
+                <button
+                    type="submit"
+                    disabled={isLoading || success}
+                    className="btn-primary w-full py-4 text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                    <span>{isLoading ? 'Sending...' : 'Send Reset Link'}</span>
+                    {isLoading && (
+                        <div className="w-4 h-4 ml-2 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    )}
+                </button>
+            </form>
 
-                    {/* Back to Login */}
-                    <div className="text-center">
+            {success && (
+                <div className="text-center">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Didn't receive the email?{' '}
                         <button
-                            type="button"
-                            onClick={onBackToLogin}
-                            className="flex items-center justify-center space-x-2 w-full py-2 text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 focus:outline-none"
+                            onClick={() => {
+                                setSuccess('')
+                                setLocalError('')
+                            }}
+                            className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium transition-colors hover:underline"
                         >
-                            <ArrowLeft className="w-4 h-4" />
-                            <span>Back to Sign In</span>
+                            Try again
                         </button>
-                    </div>
-                </form>
-
-                {/* Additional Help */}
-                <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                        Need help?
-                    </h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                        If you don't receive the email within a few minutes, please check your spam folder.
-                        Still having trouble? Contact our support team for assistance.
                     </p>
                 </div>
-            </div>
+            )}
         </div>
     )
 }
