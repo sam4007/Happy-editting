@@ -29,8 +29,11 @@ function App() {
                 <NotificationProvider>
                     <FriendsProvider>
                         <VideoProvider>
-                            <Router>
-                                <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-800 transition-all duration-500">
+                            <Router future={{
+                                v7_startTransition: true,
+                                v7_relativeSplatPath: true
+                            }}>
+                                <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
                                     <Routes>
                                         {/* Authentication Route */}
                                         <Route path="/auth" element={<AuthPage />} />

@@ -363,6 +363,27 @@ export const VideoProvider = ({ children }) => {
         localStorage.setItem(getStorageKey('categories'), JSON.stringify(categories))
     }, [categories, isInitialized, user])
 
+    const generateThumbnailDataUri = (category, title) => {
+        const colors = {
+            'Programming': '#3b82f6',
+            'Mathematics': '#10b981',
+            'Science': '#8b5cf6',
+            'Language': '#f59e0b',
+            'Business': '#ef4444',
+            'Video Editing': '#8b5cf6',
+            'AI': '#6366f1'
+        }
+        const color = colors[category] || '#ef4444'
+        const text = title?.substring(0, 20) || 'Video'
+
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180">
+            <rect width="320" height="180" fill="${color}"/>
+            <text x="160" y="90" text-anchor="middle" dominant-baseline="middle" font-family="Arial, sans-serif" font-size="14" fill="white">${text}</text>
+        </svg>`
+
+        return `data:image/svg+xml;base64,${btoa(svg)}`
+    }
+
     const addVideo = (video) => {
         const newVideo = {
             ...video,
@@ -370,7 +391,7 @@ export const VideoProvider = ({ children }) => {
             progress: 0,
             completed: false,
             uploadDate: new Date().toISOString().split('T')[0],
-            thumbnail: video.thumbnail || `https://via.placeholder.com/320x180/${video.category === 'Programming' ? '3b82f6' : video.category === 'Mathematics' ? '10b981' : video.category === 'Science' ? '8b5cf6' : video.category === 'Language' ? 'f59e0b' : video.category === 'Video Editing' ? '8b5cf6' : 'ef4444'}/ffffff?text=${encodeURIComponent(video.title?.substring(0, 20) || 'Video')}`
+            thumbnail: video.thumbnail || generateThumbnailDataUri(video.category, video.title)
         }
         setVideos(prev => {
             const updatedVideos = [...prev, newVideo]
@@ -391,7 +412,7 @@ export const VideoProvider = ({ children }) => {
             progress: 0,
             completed: false,
             uploadDate: new Date().toISOString().split('T')[0],
-            thumbnail: video.thumbnail || `https://via.placeholder.com/320x180/8b5cf6/ffffff?text=${encodeURIComponent(video.title?.substring(0, 20) || 'Video')}`
+            thumbnail: video.thumbnail || generateThumbnailDataUri(video.category, video.title)
         }))
 
         setVideos(prev => {
@@ -457,10 +478,10 @@ export const VideoProvider = ({ children }) => {
             // For video-related activities, remove ALL previous activities for the same video
             // This ensures each video appears only once with its most recent activity
             let filteredActivities = prev
-            
+
             if (data.videoId) {
                 // Remove all previous activities for this video
-                filteredActivities = prev.filter(existingActivity => 
+                filteredActivities = prev.filter(existingActivity =>
                     existingActivity.videoId !== data.videoId
                 )
                 console.log(`🧹 Removed previous activities for video: ${data.videoTitle || data.videoId}`)

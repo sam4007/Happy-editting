@@ -1,31 +1,31 @@
 import React, { useState, useMemo } from 'react'
-import { 
-    BarChart, 
-    Bar, 
-    XAxis, 
-    YAxis, 
-    CartesianGrid, 
-    Tooltip, 
+import {
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
     ResponsiveContainer,
-    PieChart, 
-    Pie, 
+    PieChart,
+    Pie,
     Cell,
     LineChart,
     Line,
     Area,
     AreaChart
 } from 'recharts'
-import { 
-    TrendingUp, 
-    ArrowUp, 
-    ArrowDown, 
-    BookOpen, 
-    Clock, 
-    Target, 
-    Award, 
-    Star, 
-    PlayCircle, 
-    CheckCircle, 
+import {
+    TrendingUp,
+    ArrowUp,
+    ArrowDown,
+    BookOpen,
+    Clock,
+    Target,
+    Award,
+    Star,
+    PlayCircle,
+    CheckCircle,
     Pause,
     Calendar as CalendarIcon,
     Download,
@@ -35,7 +35,12 @@ import {
     Users,
     Video,
     Brain,
-    Zap
+    Zap,
+    Activity,
+    Flame,
+    Trophy,
+    FileText,
+    ArrowRight
 } from 'lucide-react'
 import { useVideo } from '../contexts/VideoContext'
 import Calendar from '../components/Calendar'
@@ -83,7 +88,7 @@ const Analytics = () => {
                     return filtered
             }
 
-            filtered = filtered.filter(video => 
+            filtered = filtered.filter(video =>
                 new Date(video.uploadDate || video.addedDate || Date.now()) >= filterDate
             )
         }
@@ -458,12 +463,12 @@ ${filteredVideos.map(video => {
                                 </div>
                             </div>
                             <div className="space-y-2">
+                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                                    {stat.title}
+                                </p>
                                 <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                                     {stat.value}
                                 </h3>
-                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {stat.label}
-                                </p>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
                                     {stat.subtitle}
                                 </p>
@@ -555,7 +560,7 @@ ${filteredVideos.map(video => {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
                                     <div className="flex items-center space-x-3 mb-2">
-                                        <Timer className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                        <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
                                         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Time</span>
                                     </div>
                                     <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
