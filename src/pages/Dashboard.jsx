@@ -314,362 +314,383 @@ const Dashboard = () => {
     }
 
     return (
-        <div className="min-h-screen p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in">
-            {/* Welcome Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-light text-gray-900 dark:text-white mb-2">
-                    Welcome back! 👋
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                    Here's your learning progress overview
-                </p>
+        <div className="min-h-screen relative overflow-hidden bg-transparent">
+            {/* Premium Fixed Black Background */}
+            <div className="fixed inset-0 z-0">
+                {/* Pitch Black Background */}
+                <div className="absolute inset-0 bg-black"></div>
+
+                {/* Subtle Texture for Premium Feel */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{
+                    backgroundImage: `
+                        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0),
+                        radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 1px, transparent 0)
+                    `,
+                    backgroundSize: '30px 30px, 50px 50px'
+                }}></div>
+
+                {/* Light Mode Override */}
+                <div className="absolute inset-0 bg-white dark:bg-transparent"></div>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                {/* Total Videos */}
-                <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                            <BookOpen className="w-6 h-6 text-white" />
-                        </div>
-                        <TrendingUp className="w-5 h-5 text-green-500" />
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                            {totalVideos}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Total Videos</p>
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">+12% from last week</p>
-                    </div>
+            {/* Main Dashboard Content */}
+            <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in">
+                {/* Welcome Header */}
+                <div className="mb-12">
+                    <h1 className="text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight leading-none">
+                        Welcome back!
+                    </h1>
+                    <p className="text-xl text-gray-300 font-medium">
+                        Here's your learning progress overview
+                    </p>
                 </div>
 
-                {/* Completed */}
-                <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                            <CheckCircle className="w-6 h-6 text-white" />
-                        </div>
-                        <TrendingUp className="w-5 h-5 text-green-500" />
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                            {completedVideos}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">+8% from last week</p>
-                    </div>
-                </div>
-
-                {/* Watch Time */}
-                <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                            <Clock className="w-6 h-6 text-white" />
-                        </div>
-                        <TrendingUp className="w-5 h-5 text-green-500" />
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                            {formatDuration(courseProgress.completedDuration)}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Watch Time</p>
-                        <p className="text-xs text-green-600 dark:text-green-400 mt-1">+15% from last week</p>
-                    </div>
-                </div>
-
-                {/* Day Streak */}
-                <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                            <Target className="w-6 h-6 text-white" />
-                        </div>
-                        <Award className="w-5 h-5 text-orange-500" />
-                    </div>
-                    <div>
-                        <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                            {calculateCurrentStreak(dailyActivity)}
-                        </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Day Streak</p>
-                        <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                            {getStreakMessage(calculateCurrentStreak(dailyActivity))}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Course Progress Card */}
-            {allCourses.length > 0 && (
-                <div className="mb-8">
-                    <div
-                        className="glass-card-frosted p-8 group relative overflow-hidden cursor-grab active:cursor-grabbing hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
-                        onTouchStart={onTouchStart}
-                        onTouchMove={onTouchMove}
-                        onTouchEnd={onTouchEnd}
-                    >
-                        {/* Course Navigation Header */}
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center space-x-3">
-                                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
-                                    <Clock className="w-5 h-5 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Course Progress</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        {currentCourseIndex + 1} of {allCourses.length} courses • Swipe to navigate
-                                    </p>
-                                </div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {/* Total Videos */}
+                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                <BookOpen className="w-6 h-6 text-white" />
                             </div>
-
-                            {allCourses.length > 1 && (
-                                <div className="flex space-x-2">
-                                    <button
-                                        onClick={prevCourse}
-                                        className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                                        disabled={allCourses.length <= 1}
-                                    >
-                                        <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                    </button>
-                                    <button
-                                        onClick={nextCourse}
-                                        className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                                        disabled={allCourses.length <= 1}
-                                    >
-                                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                    </button>
-                                </div>
-                            )}
+                            <TrendingUp className="w-5 h-5 text-green-500" />
                         </div>
+                        <div>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                                {totalVideos}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Total Videos</p>
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+12% from last week</p>
+                        </div>
+                    </div>
 
-                        {currentCourse && (
-                            <div className="space-y-6">
-                                {/* Course Info */}
-                                <div className="flex items-start justify-between">
+                    {/* Completed */}
+                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                <CheckCircle className="w-6 h-6 text-white" />
+                            </div>
+                            <TrendingUp className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                                {completedVideos}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+8% from last week</p>
+                        </div>
+                    </div>
+
+                    {/* Watch Time */}
+                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                <Clock className="w-6 h-6 text-white" />
+                            </div>
+                            <TrendingUp className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                                {formatDuration(courseProgress.completedDuration)}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Watch Time</p>
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+15% from last week</p>
+                        </div>
+                    </div>
+
+                    {/* Day Streak */}
+                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                <Target className="w-6 h-6 text-white" />
+                            </div>
+                            <Award className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                                {calculateCurrentStreak(dailyActivity)}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Day Streak</p>
+                            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                                {getStreakMessage(calculateCurrentStreak(dailyActivity))}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Course Progress Card */}
+                {allCourses.length > 0 && (
+                    <div className="mb-8">
+                        <div
+                            className="glass-card-frosted p-8 group relative overflow-hidden cursor-grab active:cursor-grabbing hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
+                            onTouchStart={onTouchStart}
+                            onTouchMove={onTouchMove}
+                            onTouchEnd={onTouchEnd}
+                        >
+                            {/* Course Navigation Header */}
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center space-x-3">
+                                    <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+                                        <Clock className="w-5 h-5 text-white" />
+                                    </div>
                                     <div>
-                                        <h4 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
-                                            {currentCourse.name}
-                                        </h4>
-                                        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                                            <span>{currentCourse.instructor}</span>
-                                            <span>•</span>
-                                            <span>{currentCourse.category}</span>
-                                            <span>•</span>
-                                            <span>{currentCourse.videos.length} videos</span>
-                                        </div>
-                                    </div>
-                                    <div className="text-right">
-                                        <div className="text-2xl font-semibold text-gray-900 dark:text-white">
-                                            {courseProgress.percentage}%
-                                        </div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                                            completed
-                                        </div>
+                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Course Progress</h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            {currentCourseIndex + 1} of {allCourses.length} courses • Swipe to navigate
+                                        </p>
                                     </div>
                                 </div>
 
-                                {/* Progress Stats */}
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="text-center p-4 rounded-xl bg-black/5 dark:bg-white/5">
-                                        <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                                            {formatDuration(courseProgress.completedDuration)} / {formatDuration(courseProgress.totalDuration)}
-                                        </div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-400">Watch Time</div>
-                                    </div>
-                                    <div className="text-center p-4 rounded-xl bg-black/5 dark:bg-white/5">
-                                        <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                                            {courseProgress.completedVideos}/{courseProgress.totalVideos}
-                                        </div>
-                                        <div className="text-sm text-gray-600 dark:text-gray-400">Videos Completed</div>
-                                    </div>
-                                </div>
-
-                                {/* Progress Bar */}
-                                <div className="space-y-2">
-                                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                                        <span>Course Progress</span>
-                                        <span>{courseProgress.percentage}%</span>
-                                    </div>
-                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                                        <div
-                                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-700 ease-out"
-                                            style={{ width: `${courseProgress.percentage}%` }}
-                                        />
-                                    </div>
-                                </div>
-
-                                {/* Course Navigation Dots */}
                                 {allCourses.length > 1 && (
-                                    <div className="flex justify-center space-x-2 mt-6">
-                                        {allCourses.map((_, index) => (
-                                            <button
-                                                key={index}
-                                                onClick={() => setCurrentCourseIndex(index)}
-                                                className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentCourseIndex
-                                                    ? 'bg-indigo-500 w-6'
-                                                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-                                                    }`}
-                                                title={`Go to ${allCourses[index]?.name}`}
-                                            />
-                                        ))}
+                                    <div className="flex space-x-2">
+                                        <button
+                                            onClick={prevCourse}
+                                            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                                            disabled={allCourses.length <= 1}
+                                        >
+                                            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                        </button>
+                                        <button
+                                            onClick={nextCourse}
+                                            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                                            disabled={allCourses.length <= 1}
+                                        >
+                                            <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                        </button>
                                     </div>
                                 )}
                             </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                {/* Recent Activity */}
-                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
-                            <Clock className="w-5 h-5 text-indigo-500" />
-                            <span>Recent Activity</span>
-                        </h3>
-                        <Link
-                            to="/library"
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
-                        >
-                            View All
-                        </Link>
-                    </div>
-
-                    <div className="space-y-3">
-                        {recentActivityList.length > 0 ? (
-                            recentActivityList.map((activity) => {
-                                const display = getActivityDisplay(activity)
-                                return (
-                                    <div key={activity.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => handleActivityClick(activity)}>
-                                        <div className={`w-12 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${display.bgColor} ${display.hoverColor}`}>
-                                            {display.icon}
+                            {currentCourse && (
+                                <div className="space-y-6">
+                                    {/* Course Info */}
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <h4 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
+                                                {currentCourse.name}
+                                            </h4>
+                                            <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                                                <span>{currentCourse.instructor}</span>
+                                                <span>•</span>
+                                                <span>{currentCourse.category}</span>
+                                                <span>•</span>
+                                                <span>{currentCourse.videos.length} videos</span>
+                                            </div>
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                                {display.title}
-                                            </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {display.subtitle}
-                                            </p>
+                                        <div className="text-right">
+                                            <div className="text-2xl font-semibold text-gray-900 dark:text-white">
+                                                {courseProgress.percentage}%
+                                            </div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-400">
+                                                completed
+                                            </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {getRelativeTime(activity.timestamp)}
-                                        </p>
                                     </div>
-                                )
-                            })
-                        ) : (
-                            <div className="text-center py-8">
-                                <Clock className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                    No recent activity yet
-                                </p>
-                                <p className="text-xs text-gray-400 dark:text-gray-500">
-                                    Start watching videos to see your activity here
-                                </p>
-                            </div>
-                        )}
-                    </div>
-                </div>
 
-                {/* Favorites */}
-                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
-                            <Star className="w-5 h-5 text-yellow-500" />
-                            <span>Favorites</span>
-                        </h3>
-                        <Link
-                            to="/library?filter=favorites"
-                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
-                        >
-                            View All
-                        </Link>
-                    </div>
+                                    {/* Progress Stats */}
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="text-center p-4 rounded-xl bg-black/5 dark:bg-white/5">
+                                            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                {formatDuration(courseProgress.completedDuration)} / {formatDuration(courseProgress.totalDuration)}
+                                            </div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-400">Watch Time</div>
+                                        </div>
+                                        <div className="text-center p-4 rounded-xl bg-black/5 dark:bg-white/5">
+                                            <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                                {courseProgress.completedVideos}/{courseProgress.totalVideos}
+                                            </div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-400">Videos Completed</div>
+                                        </div>
+                                    </div>
 
-                    <div className="space-y-3">
-                        {favoriteVideos.length > 0 ? (
-                            favoriteVideos.map((video) => (
-                                <div key={video.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group">
-                                    <div className="w-12 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-yellow-200 group-hover:to-yellow-300 dark:group-hover:from-yellow-800/30 dark:group-hover:to-yellow-700/30 transition-all">
-                                        <Star className="w-4 h-4 text-yellow-500 transition-colors" />
+                                    {/* Progress Bar */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                            <span>Course Progress</span>
+                                            <span>{courseProgress.percentage}%</span>
+                                        </div>
+                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                                            <div
+                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-700 ease-out"
+                                                style={{ width: `${courseProgress.percentage}%` }}
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
-                                            {video.title}
-                                        </p>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                                            {video.instructor} • {video.duration}
-                                        </p>
-                                    </div>
-                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-yellow-500 transition-colors" />
+
+                                    {/* Course Navigation Dots */}
+                                    {allCourses.length > 1 && (
+                                        <div className="flex justify-center space-x-2 mt-6">
+                                            {allCourses.map((_, index) => (
+                                                <button
+                                                    key={index}
+                                                    onClick={() => setCurrentCourseIndex(index)}
+                                                    className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentCourseIndex
+                                                        ? 'bg-indigo-500 w-6'
+                                                        : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                                                        }`}
+                                                    title={`Go to ${allCourses[index]?.name}`}
+                                                />
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            ))
-                        ) : (
-                            <div className="text-center py-8">
-                                <Star className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    No favorites yet
-                                </p>
-                            </div>
-                        )}
+                            )}
+                        </div>
                     </div>
-                </div>
-            </div>
+                )}
 
-            {/* Quick Actions */}
-            <div className="glass-card-frosted p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-200/50 dark:border-indigo-800/50 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                            Ready to learn something new?
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-400 mb-6">
-                            Discover new lectures and expand your knowledge
-                        </p>
-                        <div className="flex flex-wrap gap-3">
+                {/* Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    {/* Recent Activity */}
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                                <Clock className="w-5 h-5 text-indigo-500" />
+                                <span>Recent Activity</span>
+                            </h3>
                             <Link
                                 to="/library"
-                                className="btn-primary"
+                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
                             >
-                                <BookOpen className="w-4 h-4 mr-2" />
-                                Browse Library
+                                View All
                             </Link>
-                            <button
-                                onClick={() => setShowCourseImporter(true)}
-                                className="btn-secondary"
-                            >
-                                <Download className="w-4 h-4 mr-2" />
-                                Import Course
-                            </button>
-                            <button
-                                onClick={() => setShowAddModal(true)}
-                                className="btn-secondary"
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Add Video
-                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {recentActivityList.length > 0 ? (
+                                recentActivityList.map((activity) => {
+                                    const display = getActivityDisplay(activity)
+                                    return (
+                                        <div key={activity.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => handleActivityClick(activity)}>
+                                            <div className={`w-12 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${display.bgColor} ${display.hoverColor}`}>
+                                                {display.icon}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                    {display.title}
+                                                </p>
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                    {display.subtitle}
+                                                </p>
+                                            </div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {getRelativeTime(activity.timestamp)}
+                                            </p>
+                                        </div>
+                                    )
+                                })
+                            ) : (
+                                <div className="text-center py-8">
+                                    <Clock className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                                        No recent activity yet
+                                    </p>
+                                    <p className="text-xs text-gray-400 dark:text-gray-500">
+                                        Start watching videos to see your activity here
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
-                    <div className="hidden lg:block ml-8">
-                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl">
-                            <Award className="w-12 h-12 text-white" />
+
+                    {/* Favorites */}
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                                <Star className="w-5 h-5 text-yellow-500" />
+                                <span>Favorites</span>
+                            </h3>
+                            <Link
+                                to="/library?filter=favorites"
+                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
+                            >
+                                View All
+                            </Link>
+                        </div>
+
+                        <div className="space-y-3">
+                            {favoriteVideos.length > 0 ? (
+                                favoriteVideos.map((video) => (
+                                    <div key={video.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+                                        <div className="w-12 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-yellow-200 group-hover:to-yellow-300 dark:group-hover:from-yellow-800/30 dark:group-hover:to-yellow-700/30 transition-all">
+                                            <Star className="w-4 h-4 text-yellow-500 transition-colors" />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
+                                                {video.title}
+                                            </p>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                                {video.instructor} • {video.duration}
+                                            </p>
+                                        </div>
+                                        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-yellow-500 transition-colors" />
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-center py-8">
+                                    <Star className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                        No favorites yet
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
+
+                {/* Quick Actions */}
+                <div className="glass-card-frosted p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-200/50 dark:border-indigo-800/50 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                                Ready to learn something new?
+                            </h3>
+                            <p className="text-gray-600 dark:text-gray-400 mb-6">
+                                Discover new lectures and expand your knowledge
+                            </p>
+                            <div className="flex flex-wrap gap-3">
+                                <Link
+                                    to="/library"
+                                    className="btn-primary"
+                                >
+                                    <BookOpen className="w-4 h-4 mr-2" />
+                                    Browse Library
+                                </Link>
+                                <button
+                                    onClick={() => setShowCourseImporter(true)}
+                                    className="btn-secondary"
+                                >
+                                    <Download className="w-4 h-4 mr-2" />
+                                    Import Course
+                                </button>
+                                <button
+                                    onClick={() => setShowAddModal(true)}
+                                    className="btn-secondary"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Add Video
+                                </button>
+                            </div>
+                        </div>
+                        <div className="hidden lg:block ml-8">
+                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl">
+                                <Award className="w-12 h-12 text-white" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Modals */}
+                <AddVideoModal
+                    isOpen={showAddModal}
+                    onClose={() => setShowAddModal(false)}
+                />
+
+                <CourseImporter
+                    isOpen={showCourseImporter}
+                    onClose={() => setShowCourseImporter(false)}
+                />
             </div>
-
-            {/* Modals */}
-            <AddVideoModal
-                isOpen={showAddModal}
-                onClose={() => setShowAddModal(false)}
-            />
-
-            <CourseImporter
-                isOpen={showCourseImporter}
-                onClose={() => setShowCourseImporter(false)}
-            />
         </div>
     )
 }
