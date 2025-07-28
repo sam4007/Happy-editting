@@ -71,7 +71,7 @@ const Sidebar = ({ open, setOpen }) => {
                     height: 'calc(100vh - 57px)'
                 }}
             >
-                <div className="h-full glass-card border-r border-white/20 dark:border-white/10 rounded-none lg:rounded-r-2xl flex flex-col">
+                <div className="h-full glass-card border-r border-white/20 dark:border-white/10 rounded-none flex flex-col" style={{ borderRadius: '0' }}>
                     {/* Close button for mobile */}
                     <div className="lg:hidden flex justify-end p-4 flex-shrink-0">
                         <button

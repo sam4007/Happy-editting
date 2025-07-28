@@ -328,9 +328,9 @@ const Dashboard = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                 {/* Total Videos */}
-                <div className="glass-card-frosted p-6 group">
+                <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg">
+                        <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
                             <BookOpen className="w-6 h-6 text-white" />
                         </div>
                         <TrendingUp className="w-5 h-5 text-green-500" />
@@ -345,9 +345,9 @@ const Dashboard = () => {
                 </div>
 
                 {/* Completed */}
-                <div className="glass-card-frosted p-6 group">
+                <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg">
+                        <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
                             <CheckCircle className="w-6 h-6 text-white" />
                         </div>
                         <TrendingUp className="w-5 h-5 text-green-500" />
@@ -362,9 +362,9 @@ const Dashboard = () => {
                 </div>
 
                 {/* Watch Time */}
-                <div className="glass-card-frosted p-6 group">
+                <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg">
+                        <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
                             <Clock className="w-6 h-6 text-white" />
                         </div>
                         <TrendingUp className="w-5 h-5 text-green-500" />
@@ -379,9 +379,9 @@ const Dashboard = () => {
                 </div>
 
                 {/* Day Streak */}
-                <div className="glass-card-frosted p-6 group">
+                <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center justify-between mb-4">
-                        <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg">
+                        <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
                             <Target className="w-6 h-6 text-white" />
                         </div>
                         <Award className="w-5 h-5 text-orange-500" />
@@ -402,7 +402,7 @@ const Dashboard = () => {
             {allCourses.length > 0 && (
                 <div className="mb-8">
                     <div
-                        className="glass-card-frosted p-8 group relative overflow-hidden cursor-grab active:cursor-grabbing"
+                        className="glass-card-frosted p-8 group relative overflow-hidden cursor-grab active:cursor-grabbing hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
                         onTouchStart={onTouchStart}
                         onTouchMove={onTouchMove}
                         onTouchEnd={onTouchEnd}
@@ -522,7 +522,7 @@ const Dashboard = () => {
             {/* Content Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                 {/* Recent Activity */}
-                <div className="glass-card-frosted p-6">
+                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                             <Clock className="w-5 h-5 text-indigo-500" />
@@ -574,7 +574,7 @@ const Dashboard = () => {
                 </div>
 
                 {/* Favorites */}
-                <div className="glass-card-frosted p-6">
+                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                             <Star className="w-5 h-5 text-yellow-500" />
@@ -619,7 +619,7 @@ const Dashboard = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="glass-card-frosted p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-200/50 dark:border-indigo-800/50">
+            <div className="glass-card-frosted p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-200/50 dark:border-indigo-800/50 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                 <div className="flex items-center justify-between">
                     <div className="flex-1">
                         <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">

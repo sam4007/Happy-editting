@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import {
     BarChart,
     Bar,
@@ -46,6 +46,7 @@ import { useVideo } from '../contexts/VideoContext'
 import Calendar from '../components/Calendar'
 import WeeklyStreakBoard from '../components/WeeklyStreakBoard'
 import LearningInsights from '../components/LearningInsights'
+import CustomSelect from '../components/CustomSelect'
 import { calculateCurrentStreak, calculateLongestStreak } from '../utils/streakCalculator'
 
 const Analytics = () => {
@@ -59,6 +60,11 @@ const Analytics = () => {
         const cats = [...new Set(videos.map(video => video.category))]
         return ['all', ...cats]
     }, [videos])
+
+    // Handle category change
+    const handleCategoryChange = (e) => {
+        setSelectedCategory(e.target.value)
+    }
 
     // Filter videos based on time range and category
     const filteredVideos = useMemo(() => {
@@ -254,7 +260,7 @@ const Analytics = () => {
             productivityHours,
             weeksActive
         }
-    }, [filteredVideos, notes, bookmarks, favorites, dailyActivity, videos])
+    }, [filteredVideos, notes, bookmarks, favorites, dailyActivity])
 
     // Export functions (moved after analytics calculation)
     const exportToCSV = () => {
@@ -422,20 +428,25 @@ ${filteredVideos.map(video => {
                             </h1>
                             <p className="text-gray-600 dark:text-gray-400">
                                 Comprehensive insights into your learning journey
+                                {selectedCategory !== 'all' && (
+                                    <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                        {selectedCategory}
+                                    </span>
+                                )}
+                                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                                    ({filteredVideos.length} videos)
+                                </span>
                             </p>
                         </div>
 
                         <div className="flex items-center space-x-4">
                             {/* Category Filter */}
-                            <select
+                            <CustomSelect
                                 value={selectedCategory}
-                                onChange={(e) => setSelectedCategory(e.target.value)}
-                                className="input-premium"
-                            >
-                                {categories.map(category => (
-                                    <option key={category} value={category}>{category}</option>
-                                ))}
-                            </select>
+                                onChange={handleCategoryChange}
+                                options={categories}
+                                className="min-w-[120px]"
+                            />
 
                             {/* Export Button */}
                             <button
@@ -452,7 +463,7 @@ ${filteredVideos.map(video => {
                 {/* Main Statistics Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {mainStats.map((stat, index) => (
-                        <div key={index} className="glass-card-frosted p-6 group hover:shadow-lg transition-all duration-300">
+                        <div key={index} className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                             <div className="flex items-center justify-between mb-4">
                                 <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                                     <stat.icon className="w-6 h-6 text-white" />
@@ -480,7 +491,7 @@ ${filteredVideos.map(video => {
                 {/* Charts Section */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Completion Progress */}
-                    <div className="glass-card-frosted p-6">
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                                 <Target className="w-5 h-5 text-emerald-500" />
@@ -532,7 +543,7 @@ ${filteredVideos.map(video => {
                     </div>
 
                     {/* Study Time Analysis */}
-                    <div className="glass-card-frosted p-6">
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
                                 <Clock className="w-5 h-5 text-purple-500" />
@@ -584,7 +595,7 @@ ${filteredVideos.map(video => {
                 {/* Category Distribution & Productivity Hours */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     {/* Category Distribution */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Category Performance
@@ -628,7 +639,7 @@ ${filteredVideos.map(video => {
                     </div>
 
                     {/* Productivity Hours - Real-time with Curves */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Daily Activity Pattern
@@ -735,7 +746,7 @@ ${filteredVideos.map(video => {
                 </div>
 
                 {/* Learning Activity Calendar - GitHub Style */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700 mb-8">
+                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300 mb-8">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             Learning Activity Calendar
@@ -928,7 +939,7 @@ ${filteredVideos.map(video => {
                 {/* Learning Insights & Achievements */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                     {/* Learning Insights */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Learning Insights
@@ -976,7 +987,7 @@ ${filteredVideos.map(video => {
                     </div>
 
                     {/* Achievements */}
-                    <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Achievements
@@ -1019,7 +1030,7 @@ ${filteredVideos.map(video => {
                 </div>
 
                 {/* Recent Activity */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             Recent Activity
