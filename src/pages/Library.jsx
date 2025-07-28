@@ -53,7 +53,7 @@ const Library = () => {
     const [showPlaylistManager, setShowPlaylistManager] = useState(false)
     const [expandedSections, setExpandedSections] = useState({})
     const [activeFilter, setActiveFilter] = useState(null)
-    const [viewMode, setViewMode] = useState('grid') // 'grid' or 'list'
+    const [viewMode, setViewMode] = useState('list') // 'grid' or 'list'
     const [searchQuery, setSearchQuery] = useState('')
 
     // Handle URL parameters for filtering
@@ -143,7 +143,7 @@ const Library = () => {
     const toggleSection = (sectionKey) => {
         setExpandedSections(prev => ({
             ...prev,
-            [sectionKey]: !prev[sectionKey]
+            [sectionKey]: prev[sectionKey] === true ? false : true
         }))
     }
 
@@ -336,7 +336,7 @@ const Library = () => {
                     <div className="space-y-8">
                         {Object.entries(groupedVideos).map(([sectionTitle, sectionVideos]) => {
                             const sectionKey = sectionTitle.replace(/\s+/g, '_').toLowerCase()
-                            const isExpanded = expandedSections[sectionKey] !== false
+                            const isExpanded = expandedSections[sectionKey] === true
 
                             return (
                                 <div key={sectionTitle} className="glass-card overflow-hidden">
