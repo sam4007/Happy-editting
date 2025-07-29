@@ -413,8 +413,27 @@ const Friends = () => {
     }
 
     return (
-        <div className="min-h-screen animate-fade-in">
-            <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+        <div className="min-h-screen relative overflow-hidden bg-transparent">
+            {/* Premium Fixed Black Background */}
+            <div className="fixed inset-0 z-0">
+                {/* Pitch Black Background */}
+                <div className="absolute inset-0 bg-black"></div>
+
+                {/* Subtle Texture for Premium Feel */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{
+                    backgroundImage: `
+                        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0),
+                        radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 1px, transparent 0)
+                    `,
+                    backgroundSize: '30px 30px, 50px 50px'
+                }}></div>
+
+                {/* Light Mode Override */}
+                <div className="absolute inset-0 bg-white dark:bg-transparent"></div>
+            </div>
+
+            {/* Main Content */}
+            <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
                 {/* Header */}
                 <div className="glass-card p-8">
                     <div className="flex items-center justify-between">
@@ -548,8 +567,8 @@ const Friends = () => {
                         <button
                             onClick={() => setActiveTab('friends')}
                             className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'friends'
-                                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                                 }`}
                         >
                             <Users className="w-4 h-4" />
@@ -558,8 +577,8 @@ const Friends = () => {
                         <button
                             onClick={() => setActiveTab('requests')}
                             className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'requests'
-                                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                                 }`}
                         >
                             <Mail className="w-4 h-4" />
@@ -568,8 +587,8 @@ const Friends = () => {
                         <button
                             onClick={() => setActiveTab('messages')}
                             className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'messages'
-                                    ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
                                 }`}
                         >
                             <MessageCircle className="w-4 h-4" />

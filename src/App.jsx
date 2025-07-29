@@ -12,6 +12,13 @@ import AuthPage from './pages/AuthPage'
 import Dashboard from './pages/Dashboard'
 import Library from './pages/Library'
 import VideoPlayer from './pages/VideoPlayer'
+import { useParams } from 'react-router-dom'
+
+// Wrapper component to ensure VideoPlayer remounts when ID changes
+const VideoPlayerWrapper = () => {
+    const { id } = useParams()
+    return <VideoPlayer key={id} />
+}
 import Analytics from './pages/Analytics'
 import Settings from './pages/Settings'
 import ProfileSettings from './pages/ProfileSettings'
@@ -50,7 +57,7 @@ function App() {
                                                                 <Routes>
                                                                     <Route path="/" element={<Dashboard />} />
                                                                     <Route path="/library" element={<Library />} />
-                                                                    <Route path="/video/:id" element={<VideoPlayer />} />
+                                                                    <Route path="/video/:id" element={<VideoPlayerWrapper />} />
                                                                     <Route path="/analytics" element={<Analytics />} />
                                                                     <Route path="/settings" element={<Settings />} />
                                                                     <Route path="/profile-settings" element={<ProfileSettings />} />

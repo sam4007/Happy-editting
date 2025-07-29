@@ -1,50 +1,17 @@
-import React, { useState } from 'react'
-import { ChevronDown, ChevronRight, CheckCircle, Circle, Play, Clock, Star, User } from 'lucide-react'
+import React from 'react'
+import { CheckCircle, Circle, Play, Clock, Star, User } from 'lucide-react'
 import { useVideo } from '../contexts/VideoContext'
 import { useNavigate } from 'react-router-dom'
 
-const CourseLayout = ({ videos, courseName, compact = false, currentVideoId = null }) => {
+const CourseLayout = ({ videos, courseName, instructor, compact = false, currentVideoId = null }) => {
     const { updateVideo } = useVideo()
     const navigate = useNavigate()
-    const [expandedSections, setExpandedSections] = useState({})
-
-    // Auto-expand first section by default
-    React.useEffect(() => {
-        if (videos.length > 0) {
-            const firstModule = videos[0]?.module || 'Other'
-            setExpandedSections(prev => ({
-                ...prev,
-                [firstModule]: true
-            }))
-        }
-    }, [videos])
-
-    // Group videos by module
-    const groupedVideos = videos.reduce((acc, video) => {
-        const module = video.module || 'Other'
-        if (!acc[module]) {
-            acc[module] = []
-        }
-        acc[module].push(video)
-        return acc
-    }, {})
-
-    // Calculate section progress
-    const getSectionProgress = (sectionVideos) => {
-        const completed = sectionVideos.filter(v => v.completed).length
-        const total = sectionVideos.length
-        const percentage = total > 0 ? (completed / total) * 100 : 0
-        return { completed, total, percentage }
-    }
 
     // Calculate overall course progress
-    const overallProgress = getSectionProgress(videos)
-
-    const toggleSection = (sectionName) => {
-        setExpandedSections(prev => ({
-            ...prev,
-            [sectionName]: !prev[sectionName]
-        }))
+    const overallProgress = {
+        completed: videos.filter(v => v.completed).length,
+        total: videos.length,
+        percentage: videos.length > 0 ? (videos.filter(v => v.completed).length / videos.length) * 100 : 0
     }
 
     const toggleVideoCompletion = (video) => {
@@ -57,136 +24,105 @@ const CourseLayout = ({ videos, courseName, compact = false, currentVideoId = nu
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4">
             {/* Course Header */}
-            <div className={`bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl text-white ${compact ? 'p-4' : 'p-6'}`}>
-                <h2 className={`font-bold mb-2 ${compact ? 'text-lg' : 'text-2xl'}`}>{courseName}</h2>
-                <div className={`flex items-center space-x-3 ${compact ? 'mb-3' : 'mb-4'}`}>
-                    <span className="text-purple-100 text-sm">{videos.length} lessons</span>
-                    <span className="text-purple-100">•</span>
-                    <span className="text-purple-100 text-sm">{overallProgress.completed}/{overallProgress.total} completed</span>
+            <div className={`bg-gradient-to-br from-primary-500/80 to-primary-600/80 backdrop-blur-md rounded-2xl text-white shadow-xl border border-white/20 ${compact ? 'p-5' : 'p-8'}`}>
+                <div className="mb-3">
+                    <h2 className={`font-black tracking-tight ${compact ? 'text-xl' : 'text-3xl'} leading-tight`}>
+                        {courseName}
+                    </h2>
+                    {instructor && (
+                        <p className={`text-white/80 font-medium mt-1 ${compact ? 'text-sm' : 'text-base'}`}>
+                            by {instructor}
+                        </p>
+                    )}
+                </div>
+                <div className={`flex items-center ${compact ? 'mb-4' : 'mb-6'}`}>
+                    <div className="bg-white/20 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/30">
+                        <span className="text-white font-medium text-xs">{overallProgress.completed}/{overallProgress.total} completed</span>
+                    </div>
                 </div>
 
                 {/* Overall Progress Bar */}
-                <div className="w-full bg-purple-800 rounded-full h-2">
+                <div className="w-full bg-white/20 backdrop-blur-sm rounded-full h-3 shadow-inner border border-white/30 mb-3">
                     <div
-                        className="bg-white rounded-full h-2 transition-all duration-300"
+                        className="bg-white rounded-full h-3 transition-all duration-500 shadow-lg"
                         style={{ width: `${overallProgress.percentage}%` }}
                     />
                 </div>
-                <p className="text-xs text-purple-100 mt-2">
+                <p className="text-sm text-white font-bold">
                     {Math.round(overallProgress.percentage)}% Complete
                 </p>
             </div>
 
-            {/* Course Sections */}
-            <div className="space-y-4">
-                {Object.entries(groupedVideos).map(([sectionName, sectionVideos]) => {
-                    const isExpanded = expandedSections[sectionName]
-                    const progress = getSectionProgress(sectionVideos)
+            {/* Video List */}
+            <div className="glass-card-frosted overflow-hidden">
+                <div className="divide-y divide-white/10 dark:divide-white/5">
+                    {videos.map((video, videoIndex) => (
+                        <div
+                            key={video.id}
+                            className={`flex items-center hover:bg-white/10 dark:hover:bg-white/5 backdrop-blur-sm transition-colors duration-200 group cursor-pointer ${compact ? 'gap-3 px-4 py-3' : 'gap-4 px-5 py-4'} ${video.id === currentVideoId ? 'bg-primary-50/30 dark:bg-primary-900/20' : ''}`}
+                        >
+                            {/* Serial Number */}
+                            <div className="flex-shrink-0 w-8 h-8 bg-white/30 dark:bg-white/15 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 dark:border-white/10 shadow-sm">
+                                <span className={`font-bold text-gray-700 dark:text-gray-200 ${compact ? 'text-xs' : 'text-sm'}`}>
+                                    {videoIndex + 1}
+                                </span>
+                            </div>
 
-                    return (
-                        <div key={sectionName} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-                            {/* Section Header */}
+                            {/* Completion Checkbox */}
                             <button
-                                onClick={() => toggleSection(sectionName)}
-                                className={`w-full flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${compact ? 'px-4 py-3' : 'px-6 py-4'}`}
+                                onClick={() => toggleVideoCompletion(video)}
+                                className="flex-shrink-0 p-1 rounded-full hover:bg-white/10 dark:hover:bg-white/5 transition-colors duration-200"
                             >
-                                <div className="flex items-center space-x-3">
-                                    {isExpanded ? (
-                                        <ChevronDown className="w-5 h-5 text-gray-500" />
-                                    ) : (
-                                        <ChevronRight className="w-5 h-5 text-gray-500" />
-                                    )}
-                                    <div className="text-left">
-                                        <h3 className="font-semibold text-gray-900 dark:text-white">
-                                            {sectionName}
-                                        </h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                                            {sectionVideos.length} lessons • {progress.completed}/{progress.total} completed
-                                        </p>
-                                    </div>
-                                </div>
-
-                                {/* Section Progress */}
-                                <div className="flex items-center space-x-3">
-                                    <div className="w-24 bg-gray-200 dark:bg-gray-600 rounded-full h-2">
-                                        <div
-                                            className="bg-green-500 rounded-full h-2 transition-all duration-300"
-                                            style={{ width: `${progress.percentage}%` }}
-                                        />
-                                    </div>
-                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                        {Math.round(progress.percentage)}%
-                                    </span>
-                                </div>
+                                {video.completed ? (
+                                    <CheckCircle className="w-5 h-5 text-green-500" />
+                                ) : (
+                                    <Circle className="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-200" />
+                                )}
                             </button>
 
-                            {/* Section Content */}
-                            {isExpanded && (
-                                <div className="border-t border-gray-200 dark:border-gray-700">
-                                    {sectionVideos.map((video) => (
-                                        <div
-                                            key={video.id}
-                                            className={`flex items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${compact ? 'space-x-3 px-4 py-3' : 'space-x-4 px-6 py-4'} ${video.id === currentVideoId ? 'bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800' : ''}`}
-                                        >
-                                            {/* Completion Checkbox */}
-                                            <button
-                                                onClick={() => toggleVideoCompletion(video)}
-                                                className="flex-shrink-0"
-                                            >
-                                                {video.completed ? (
-                                                    <CheckCircle className="w-5 h-5 text-green-500" />
-                                                ) : (
-                                                    <Circle className="w-5 h-5 text-gray-400 hover:text-green-500 transition-colors" />
-                                                )}
-                                            </button>
-
-                                            {/* Status Indicator */}
-                                            <div className={`w-3 h-3 rounded-full flex-shrink-0 ${video.completed ? 'bg-green-500' : video.progress > 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                            {/* Status Indicator */}
+                            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${video.completed ? 'bg-green-500' : video.progress > 0 ? 'bg-primary-500' : 'bg-gray-400 dark:bg-gray-500'}`} />
 
 
 
-                                            {/* Video Info */}
-                                            <div className="flex-1 min-w-0">
-                                                <button
-                                                    onClick={() => handleVideoClick(video)}
-                                                    className="text-left w-full group"
-                                                >
-                                                    <h4 className={`font-medium text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors truncate ${compact ? 'text-sm' : ''}`}>
-                                                        {video.title}
-                                                    </h4>
-                                                    <div className={`flex items-center space-x-2 mt-1 text-gray-500 dark:text-gray-400 ${compact ? 'text-xs space-x-2' : 'text-sm space-x-3'}`}>
-                                                        <div className="flex items-center space-x-1">
-                                                            <User className="w-4 h-4" />
-                                                            <span>{video.instructor}</span>
-                                                        </div>
-                                                        <div className="flex items-center space-x-1">
-                                                            <Clock className="w-4 h-4" />
-                                                            <span>{video.duration}</span>
-                                                        </div>
-                                                        <div className="flex items-center space-x-1">
-                                                            <Star className="w-4 h-4 text-yellow-500" />
-                                                            <span>{video.rating}</span>
-                                                        </div>
-                                                    </div>
-                                                </button>
-                                            </div>
-
-                                            {/* Play Button */}
-                                            <button
-                                                onClick={() => handleVideoClick(video)}
-                                                className="flex-shrink-0 w-8 h-8 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center hover:bg-purple-200 dark:hover:bg-purple-800 transition-colors"
-                                            >
-                                                <Play className="w-4 h-4 text-purple-600 dark:text-purple-400" />
-                                            </button>
+                            {/* Video Info */}
+                            <div className="flex-1 min-w-0 mr-2">
+                                <button
+                                    onClick={() => handleVideoClick(video)}
+                                    className="text-left w-full group"
+                                >
+                                    <h4 className={`font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 truncate ${compact ? 'text-sm' : 'text-base'} leading-tight`}>
+                                        {video.title}
+                                    </h4>
+                                    <div className={`flex items-center gap-2 mt-2 text-gray-600 dark:text-gray-400 ${compact ? 'text-xs' : 'text-sm'} flex-wrap`}>
+                                        <div className="flex items-center space-x-1 bg-white/20 dark:bg-white/10 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                                            <User className="w-3 h-3 flex-shrink-0" />
+                                            <span className="font-medium text-xs truncate max-w-16">{video.instructor}</span>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
+                                        <div className="flex items-center space-x-1 bg-white/20 dark:bg-white/10 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                                            <Clock className="w-3 h-3 flex-shrink-0" />
+                                            <span className="font-medium text-xs">{video.duration}</span>
+                                        </div>
+                                        <div className="flex items-center space-x-1 bg-yellow-100/50 dark:bg-yellow-900/30 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                                            <Star className="w-3 h-3 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                                            <span className="font-medium text-yellow-700 dark:text-yellow-300 text-xs">{video.rating}</span>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
+
+                            {/* Play Button */}
+                            <button
+                                onClick={() => handleVideoClick(video)}
+                                className="flex-shrink-0 w-9 h-9 bg-white/30 dark:bg-white/15 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/40 dark:hover:bg-white/25 transition-colors duration-200 border border-white/20 dark:border-white/10"
+                            >
+                                <Play className="w-4 h-4 text-primary-600 dark:text-primary-400 ml-0.5" />
+                            </button>
                         </div>
-                    )
-                })}
+                    ))}
+                </div>
             </div>
         </div>
     )

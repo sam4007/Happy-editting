@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
     TrendingUp,
     Clock,
@@ -33,6 +33,7 @@ const Dashboard = () => {
         recentActivities,
         dailyActivity
     } = useVideo()
+    const navigate = useNavigate()
     const [showAddModal, setShowAddModal] = useState(false)
     const [showCourseImporter, setShowCourseImporter] = useState(false)
     const [currentCourseIndex, setCurrentCourseIndex] = useState(0)
@@ -47,8 +48,14 @@ const Dashboard = () => {
     // Calculate statistics
     const totalVideos = videos.length
     const completedVideos = videos.filter(v => v.completed).length
-    const favoriteVideos = favorites.slice(0, 5)
-    const recentVideos = watchHistory.slice(0, 5)
+    const favoriteVideos = favorites
+        .slice(0, 5)
+        .map(id => videos.find(v => v.id === id))
+        .filter(Boolean) // Remove any undefined videos
+    const recentVideos = watchHistory
+        .slice(0, 5)
+        .map(id => videos.find(v => v.id === id))
+        .filter(Boolean) // Remove any undefined videos
 
     // Get recent activities (limit to 8 most recent)
     const recentActivityList = recentActivities.slice(0, 8)
@@ -313,6 +320,55 @@ const Dashboard = () => {
         }
     }
 
+    // Function to determine which video to play next
+    const getNextVideoToPlay = (course) => {
+        if (!course || !course.videos || course.videos.length === 0) return null
+
+        const courseVideos = course.videos.sort((a, b) => {
+            // Sort by order if available, otherwise by title
+            if (a.order !== undefined && b.order !== undefined) {
+                return a.order - b.order
+            }
+            return a.title.localeCompare(b.title)
+        })
+
+        // First, find any video with progress > 0 but not completed (user was watching but didn't finish)
+        const videoInProgress = courseVideos.find(video =>
+            video.progress && video.progress > 0 && !video.completed
+        )
+
+        if (videoInProgress) {
+            return videoInProgress
+        }
+
+        // If no video in progress, find the first uncompleted video after the last completed one
+        const completedVideos = courseVideos.filter(video => video.completed)
+
+        if (completedVideos.length === 0) {
+            // No videos completed, start with first video
+            return courseVideos[0]
+        }
+
+        if (completedVideos.length === courseVideos.length) {
+            // All videos completed, restart from the first video
+            return courseVideos[0]
+        }
+
+        // Find the first uncompleted video
+        const nextVideo = courseVideos.find(video => !video.completed)
+        return nextVideo || courseVideos[0]
+    }
+
+    // Handler for "Start where you left" button
+    const handleStartWhereYouLeft = () => {
+        const course = allCourses[currentCourseIndex]
+        const nextVideo = getNextVideoToPlay(course)
+
+        if (nextVideo) {
+            navigate(`/video/${nextVideo.id}`)
+        }
+    }
+
     return (
         <div className="min-h-screen relative overflow-hidden bg-transparent">
             {/* Premium Fixed Black Background */}
@@ -343,79 +399,6 @@ const Dashboard = () => {
                     <p className="text-xl text-gray-300 font-medium">
                         Here's your learning progress overview
                     </p>
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    {/* Total Videos */}
-                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                                <BookOpen className="w-6 h-6 text-white" />
-                            </div>
-                            <TrendingUp className="w-5 h-5 text-green-500" />
-                        </div>
-                        <div>
-                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                                {totalVideos}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Total Videos</p>
-                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+12% from last week</p>
-                        </div>
-                    </div>
-
-                    {/* Completed */}
-                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                                <CheckCircle className="w-6 h-6 text-white" />
-                            </div>
-                            <TrendingUp className="w-5 h-5 text-green-500" />
-                        </div>
-                        <div>
-                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                                {completedVideos}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
-                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+8% from last week</p>
-                        </div>
-                    </div>
-
-                    {/* Watch Time */}
-                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                                <Clock className="w-6 h-6 text-white" />
-                            </div>
-                            <TrendingUp className="w-5 h-5 text-green-500" />
-                        </div>
-                        <div>
-                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                                {formatDuration(courseProgress.completedDuration)}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Watch Time</p>
-                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+15% from last week</p>
-                        </div>
-                    </div>
-
-                    {/* Day Streak */}
-                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
-                                <Target className="w-6 h-6 text-white" />
-                            </div>
-                            <Award className="w-5 h-5 text-orange-500" />
-                        </div>
-                        <div>
-                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                                {calculateCurrentStreak(dailyActivity)}
-                            </h3>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Day Streak</p>
-                            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                                {getStreakMessage(calculateCurrentStreak(dailyActivity))}
-                            </p>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Course Progress Card */}
@@ -517,6 +500,19 @@ const Dashboard = () => {
                                         </div>
                                     </div>
 
+                                    {/* Continue Learning Button */}
+                                    {getNextVideoToPlay(currentCourse) && (
+                                        <div className="flex justify-center">
+                                            <button
+                                                onClick={handleStartWhereYouLeft}
+                                                className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white rounded-xl font-medium transition-all duration-200 hover:scale-105 hover:shadow-lg group"
+                                            >
+                                                <PlayCircle className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
+                                                <span>Start where you left</span>
+                                            </button>
+                                        </div>
+                                    )}
+
                                     {/* Course Navigation Dots */}
                                     {allCourses.length > 1 && (
                                         <div className="flex justify-center space-x-2 mt-6">
@@ -538,6 +534,79 @@ const Dashboard = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {/* Total Videos */}
+                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                <BookOpen className="w-6 h-6 text-white" />
+                            </div>
+                            <TrendingUp className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                                {totalVideos}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Total Videos</p>
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+12% from last week</p>
+                        </div>
+                    </div>
+
+                    {/* Completed */}
+                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-green-500 to-green-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                <CheckCircle className="w-6 h-6 text-white" />
+                            </div>
+                            <TrendingUp className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                                {completedVideos}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+8% from last week</p>
+                        </div>
+                    </div>
+
+                    {/* Watch Time */}
+                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                <Clock className="w-6 h-6 text-white" />
+                            </div>
+                            <TrendingUp className="w-5 h-5 text-green-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                                {formatDuration(courseProgress.completedDuration)}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Watch Time</p>
+                            <p className="text-xs text-green-600 dark:text-green-400 mt-1">+15% from last week</p>
+                        </div>
+                    </div>
+
+                    {/* Day Streak */}
+                    <div className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="p-3 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 shadow-lg group-hover:scale-105 transition-transform duration-300">
+                                <Target className="w-6 h-6 text-white" />
+                            </div>
+                            <Award className="w-5 h-5 text-orange-500" />
+                        </div>
+                        <div>
+                            <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
+                                {calculateCurrentStreak(dailyActivity)}
+                            </h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Day Streak</p>
+                            <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                                {getStreakMessage(calculateCurrentStreak(dailyActivity))}
+                            </p>
+                        </div>
+                    </div>
+                </div>
 
                 {/* Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
@@ -611,7 +680,11 @@ const Dashboard = () => {
                         <div className="space-y-3">
                             {favoriteVideos.length > 0 ? (
                                 favoriteVideos.map((video) => (
-                                    <div key={video.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group">
+                                    <div
+                                        key={video.id}
+                                        onClick={() => navigate(`/video/${video.id}`)}
+                                        className="flex items-center space-x-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group"
+                                    >
                                         <div className="w-12 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-yellow-200 group-hover:to-yellow-300 dark:group-hover:from-yellow-800/30 dark:group-hover:to-yellow-700/30 transition-all">
                                             <Star className="w-4 h-4 text-yellow-500 transition-colors" />
                                         </div>

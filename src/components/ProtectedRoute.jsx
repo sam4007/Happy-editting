@@ -1,13 +1,26 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { BookOpen, Loader2 } from 'lucide-react'
 
 const ProtectedRoute = ({ children }) => {
     const { user, loading } = useAuth()
+    const [loadingTimeout, setLoadingTimeout] = useState(false)
 
-    // Show loading spinner while checking authentication
-    if (loading) {
+    // Fallback timeout in case loading gets stuck
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (loading) {
+                console.warn('⚠️ Loading timeout reached, forcing completion')
+                setLoadingTimeout(true)
+            }
+        }, 10000) // 10 second timeout
+
+        return () => clearTimeout(timeout)
+    }, [loading])
+
+    // Show loading spinner while checking authentication (with timeout fallback)
+    if (loading && !loadingTimeout) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
                 <div className="text-center">

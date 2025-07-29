@@ -76,31 +76,60 @@ export const VideoProvider = ({ children }) => {
         }
     }
 
-    // Update user stats in Firestore
-    const updateUserStatsInFirestore = async (videoList = videos) => {
-        if (!user) {
-            console.log('📊 VideoContext: No user logged in, skipping stats update')
-            return
-        }
+    // Throttled Firestore update to prevent quota exhaustion
+    const updateUserStatsInFirestore = (() => {
+        let timeoutId = null
+        let retryCount = 0
+        const maxRetries = 3
+        const baseDelay = 2000 // 2 seconds
 
-        try {
-            const stats = calculateUserStats(videoList)
-            console.log('📊 VideoContext: Calculated stats:', stats)
-            console.log('📊 VideoContext: Video count for calculation:', videoList.length)
+        return async (videoList = videos) => {
+            if (!user) {
+                console.log('📊 VideoContext: No user logged in, skipping stats update')
+                return
+            }
 
-            const userRef = doc(db, 'users', user.uid)
-            await updateDoc(userRef, {
-                stats: {
-                    ...stats,
-                    completionRate: stats.totalCourses > 0 ? Math.round((stats.completedCourses / stats.totalCourses) * 100) : 0
+            // Clear existing timeout to debounce multiple rapid calls
+            if (timeoutId) {
+                clearTimeout(timeoutId)
+            }
+
+            // Debounce the actual Firestore call by 1 second
+            timeoutId = setTimeout(async () => {
+                try {
+                    const stats = calculateUserStats(videoList)
+                    console.log('📊 VideoContext: Calculated stats:', stats)
+
+                    const userRef = doc(db, 'users', user.uid)
+                    await updateDoc(userRef, {
+                        stats: {
+                            ...stats,
+                            completionRate: stats.totalCourses > 0 ? Math.round((stats.completedCourses / stats.totalCourses) * 100) : 0
+                        }
+                    })
+
+                    console.log('✅ VideoContext: User stats updated successfully in Firestore')
+                    retryCount = 0 // Reset retry count on success
+                } catch (error) {
+                    console.error('❌ VideoContext: Could not update user stats:', error)
+
+                    // Implement exponential backoff for retries
+                    if (retryCount < maxRetries && (error.code === 'resource-exhausted' || error.code === 'unavailable')) {
+                        retryCount++
+                        const delay = baseDelay * Math.pow(2, retryCount - 1)
+                        console.log(`🔄 VideoContext: Retrying in ${delay}ms (attempt ${retryCount}/${maxRetries})`)
+
+                        setTimeout(() => {
+                            updateUserStatsInFirestore(videoList)
+                        }, delay)
+                    } else {
+                        console.warn('⚠️ VideoContext: Max retries reached or permanent error, giving up on stats update')
+                        retryCount = 0
+                    }
                 }
-            })
-
-            console.log('✅ VideoContext: User stats updated successfully in Firestore')
-        } catch (error) {
-            console.error('❌ VideoContext: Could not update user stats:', error)
+            }, 1000) // 1 second debounce
         }
-    }
+    })()
 
     // Debug function to manually test stats
     const debugStats = () => {

@@ -93,7 +93,10 @@ const Sidebar = ({ open, setOpen }) => {
                                     <NavLink
                                         key={item.to}
                                         to={item.to}
-                                        onClick={() => setOpen(false)}
+                                        onClick={(e) => {
+                                            console.log('🧭 Sidebar: Navigating to:', item.to, 'from:', location.pathname)
+                                            setOpen(false)
+                                        }}
                                         className={`nav-item group ${active ? 'active' : ''}`}
                                     >
                                         <Icon className={`w-5 h-5 mr-3 transition-colors ${active

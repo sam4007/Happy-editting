@@ -417,8 +417,27 @@ ${filteredVideos.map(video => {
     ]
 
     return (
-        <div className="min-h-screen animate-fade-in">
-            <div className="p-6 lg:p-8 max-w-7xl mx-auto space-y-8">
+        <div className="min-h-screen relative overflow-hidden bg-transparent">
+            {/* Premium Fixed Black Background */}
+            <div className="fixed inset-0 z-0">
+                {/* Pitch Black Background */}
+                <div className="absolute inset-0 bg-black"></div>
+
+                {/* Subtle Texture for Premium Feel */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{
+                    backgroundImage: `
+                        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0),
+                        radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 1px, transparent 0)
+                    `,
+                    backgroundSize: '30px 30px, 50px 50px'
+                }}></div>
+
+                {/* Light Mode Override */}
+                <div className="absolute inset-0 bg-white dark:bg-transparent"></div>
+            </div>
+
+            {/* Main Content */}
+            <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
                 {/* Header */}
                 <div className="glass-card p-8">
                     <div className="flex items-center justify-between">

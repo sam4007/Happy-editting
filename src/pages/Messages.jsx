@@ -259,7 +259,24 @@ const Messages = () => {
 
     if (!friend) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
+            <div className="min-h-screen relative overflow-hidden bg-transparent p-6">
+                {/* Premium Fixed Black Background */}
+                <div className="fixed inset-0 z-0">
+                    {/* Pitch Black Background */}
+                    <div className="absolute inset-0 bg-black"></div>
+
+                    {/* Subtle Texture for Premium Feel */}
+                    <div className="absolute inset-0 opacity-[0.03]" style={{
+                        backgroundImage: `
+                            radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0),
+                            radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 1px, transparent 0)
+                        `,
+                        backgroundSize: '30px 30px, 50px 50px'
+                    }}></div>
+
+                    {/* Light Mode Override */}
+                    <div className="absolute inset-0 bg-white dark:bg-transparent"></div>
+                </div>
                 <div className="max-w-4xl mx-auto">
                     <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
                         <p className="text-gray-500 dark:text-gray-400">Friend not found or not in your friends list.</p>
@@ -277,7 +294,24 @@ const Messages = () => {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 lg:pl-64 flex flex-col">
+        <div className="min-h-screen relative overflow-hidden bg-transparent lg:pl-64 flex flex-col">
+            {/* Premium Fixed Black Background */}
+            <div className="fixed inset-0 z-0">
+                {/* Pitch Black Background */}
+                <div className="absolute inset-0 bg-black"></div>
+
+                {/* Subtle Texture for Premium Feel */}
+                <div className="absolute inset-0 opacity-[0.03]" style={{
+                    backgroundImage: `
+                        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0),
+                        radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 1px, transparent 0)
+                    `,
+                    backgroundSize: '30px 30px, 50px 50px'
+                }}></div>
+
+                {/* Light Mode Override */}
+                <div className="absolute inset-0 bg-white dark:bg-transparent"></div>
+            </div>
             {/* Header - Fixed below main app header */}
             <div className="sticky top-16 z-20 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
                 <div className="flex items-center space-x-3">

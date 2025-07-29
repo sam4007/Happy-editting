@@ -31,46 +31,61 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
 
-    // Create or update user document in Firestore
+    // Create or update user document in Firestore with retry logic
     const createUserDocument = async (user) => {
         if (!user) return
 
-        try {
-            const userRef = doc(db, 'users', user.uid)
-            const userSnap = await getDoc(userRef)
+        const maxRetries = 2
+        let retryCount = 0
 
-            if (!userSnap.exists()) {
-                // Create new user document
-                await setDoc(userRef, {
-                    uid: user.uid,
-                    email: user.email,
-                    displayName: user.displayName || user.email?.split('@')[0] || 'User',
-                    photoURL: user.photoURL || null,
-                    emailVerified: user.emailVerified,
-                    createdAt: serverTimestamp(),
-                    lastLoginAt: serverTimestamp(),
-                    friends: [],
-                    stats: {
-                        totalCourses: 0,
-                        completedCourses: 0,
-                        totalStudyTime: 0,
-                        completionRate: 0
-                    }
-                })
-                console.log('✅ User document created in Firestore')
-            } else {
-                // Update existing user document with latest info
-                await setDoc(userRef, {
-                    displayName: user.displayName || userSnap.data().displayName,
-                    photoURL: user.photoURL || userSnap.data().photoURL,
-                    emailVerified: user.emailVerified,
-                    lastLoginAt: serverTimestamp()
-                }, { merge: true })
-                console.log('✅ User document updated in Firestore')
+        const attemptCreate = async () => {
+            try {
+                const userRef = doc(db, 'users', user.uid)
+                const userSnap = await getDoc(userRef)
+
+                if (!userSnap.exists()) {
+                    // Create new user document
+                    await setDoc(userRef, {
+                        uid: user.uid,
+                        email: user.email,
+                        displayName: user.displayName || user.email?.split('@')[0] || 'User',
+                        photoURL: user.photoURL || null,
+                        emailVerified: user.emailVerified,
+                        createdAt: serverTimestamp(),
+                        lastLoginAt: serverTimestamp(),
+                        friends: [],
+                        stats: {
+                            totalCourses: 0,
+                            completedCourses: 0,
+                            totalStudyTime: 0,
+                            completionRate: 0
+                        }
+                    })
+                    console.log('✅ User document created in Firestore')
+                } else {
+                    // Update existing user document with latest info
+                    await setDoc(userRef, {
+                        displayName: user.displayName || userSnap.data().displayName,
+                        photoURL: user.photoURL || userSnap.data().photoURL,
+                        emailVerified: user.emailVerified,
+                        lastLoginAt: serverTimestamp()
+                    }, { merge: true })
+                    console.log('✅ User document updated in Firestore')
+                }
+            } catch (error) {
+                if ((error.code === 'resource-exhausted' || error.code === 'unavailable') && retryCount < maxRetries) {
+                    retryCount++
+                    const delay = 1000 * Math.pow(2, retryCount) // Exponential backoff
+                    console.log(`🔄 Retrying user document creation in ${delay}ms (attempt ${retryCount}/${maxRetries})`)
+                    setTimeout(attemptCreate, delay)
+                } else {
+                    console.error('❌ Error creating/updating user document (giving up):', error)
+                    // Don't throw the error to prevent blocking authentication
+                }
             }
-        } catch (error) {
-            console.error('❌ Error creating/updating user document:', error)
         }
+
+        await attemptCreate()
     }
 
     // Sign up with email and password
@@ -301,14 +316,22 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
-            setUser(user)
+            try {
+                setUser(user)
 
-            // Create/update user document when user signs in
-            if (user) {
-                await createUserDocument(user)
+                // Create/update user document when user signs in (non-blocking)
+                if (user) {
+                    // Don't await this to prevent blocking the loading state
+                    createUserDocument(user).catch(error => {
+                        console.warn('⚠️ Non-critical: Could not create/update user document:', error)
+                    })
+                }
+            } catch (error) {
+                console.error('❌ Error in auth state change:', error)
+            } finally {
+                // Always set loading to false, regardless of Firestore operations
+                setLoading(false)
             }
-
-            setLoading(false)
         })
 
         return unsubscribe
