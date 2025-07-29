@@ -15,13 +15,17 @@ import {
     PlayCircle,
     ChevronLeft,
     ChevronRight,
-    Plus
+    Plus,
+    Settings
 } from 'lucide-react'
 import { useVideo } from '../contexts/VideoContext'
+import { useAuth } from '../contexts/AuthContext'
 import VideoCard from '../components/VideoCard'
 import AddVideoModal from '../components/AddVideoModal'
 import CourseImporter from '../components/CourseImporter'
 import { calculateCurrentStreak, getStreakMessage } from '../utils/streakCalculator'
+import { db } from '../config/firebase'
+import { doc, getDoc, setDoc } from 'firebase/firestore'
 
 const Dashboard = () => {
     const {
@@ -31,12 +35,18 @@ const Dashboard = () => {
         notes,
         bookmarks,
         recentActivities,
-        dailyActivity
+        dailyActivity,
+        dailyCompletedVideos
     } = useVideo()
+    const { user } = useAuth()
     const navigate = useNavigate()
     const [showAddModal, setShowAddModal] = useState(false)
     const [showCourseImporter, setShowCourseImporter] = useState(false)
     const [currentCourseIndex, setCurrentCourseIndex] = useState(0)
+    const [weeklyGoal, setWeeklyGoal] = useState(5)
+    const [showGoalModal, setShowGoalModal] = useState(false)
+    const [tempGoal, setTempGoal] = useState(5)
+    const [isLoadingGoal, setIsLoadingGoal] = useState(true)
 
     // Touch/Swipe state for mobile
     const [touchStart, setTouchStart] = useState(null)
@@ -44,6 +54,85 @@ const Dashboard = () => {
 
     // Minimum swipe distance (in px)
     const minSwipeDistance = 50
+
+    // Load weekly goal from Firestore
+    useEffect(() => {
+        const loadWeeklyGoal = async () => {
+            if (!user) {
+                setIsLoadingGoal(false)
+                return
+            }
+
+            try {
+                const userRef = doc(db, 'users', user.uid)
+                const userDoc = await getDoc(userRef)
+
+                if (userDoc.exists() && userDoc.data().weeklyGoal) {
+                    const goal = userDoc.data().weeklyGoal
+                    setWeeklyGoal(goal)
+                    setTempGoal(goal)
+                    setIsLoadingGoal(false)
+                } else {
+                    // New user, show goal setting modal
+                    setShowGoalModal(true)
+                    setIsLoadingGoal(false)
+                }
+            } catch (error) {
+                console.error('Error loading weekly goal:', error)
+                setIsLoadingGoal(false)
+            }
+        }
+
+        loadWeeklyGoal()
+    }, [user])
+
+    // Save weekly goal to Firestore
+    const saveWeeklyGoal = async (goal) => {
+        if (!user) return
+
+        try {
+            const userRef = doc(db, 'users', user.uid)
+            await setDoc(userRef, { weeklyGoal: goal }, { merge: true })
+            console.log('Weekly goal saved:', goal)
+        } catch (error) {
+            console.error('Error saving weekly goal:', error)
+        }
+    }
+
+    const handleSaveGoal = async () => {
+        setWeeklyGoal(tempGoal)
+        await saveWeeklyGoal(tempGoal)
+        setShowGoalModal(false)
+    }
+
+    const openGoalSettings = () => {
+        setTempGoal(weeklyGoal)
+        setShowGoalModal(true)
+    }
+
+    // Calculate videos watched for this week
+    const getThisWeekVideosWatched = () => {
+        const today = new Date()
+        const startOfWeek = new Date(today)
+        startOfWeek.setDate(today.getDate() - (today.getDay() === 0 ? 7 : today.getDay()) + 1) // Monday
+
+        const endOfWeek = new Date(startOfWeek)
+        endOfWeek.setDate(startOfWeek.getDate() + 6) // Sunday
+
+        let totalVideos = 0
+        const current = new Date(startOfWeek)
+
+        while (current <= endOfWeek) {
+            const dateStr = current.toISOString().split('T')[0]
+            totalVideos += dailyCompletedVideos[dateStr] ? dailyCompletedVideos[dateStr].length : 0
+            current.setDate(current.getDate() + 1)
+        }
+
+        return totalVideos
+    }
+
+    const thisWeekVideosWatched = getThisWeekVideosWatched()
+    const weeklyProgress = Math.min((thisWeekVideosWatched / weeklyGoal) * 100, 100)
 
     // Calculate statistics
     const totalVideos = videos.length
@@ -320,43 +409,33 @@ const Dashboard = () => {
         }
     }
 
-    // Function to determine which video to play next
+    // Function to find the first uncompleted video in the course
     const getNextVideoToPlay = (course) => {
-        if (!course || !course.videos || course.videos.length === 0) return null
-
-        const courseVideos = course.videos.sort((a, b) => {
-            // Sort by order if available, otherwise by title
-            if (a.order !== undefined && b.order !== undefined) {
-                return a.order - b.order
-            }
-            return a.title.localeCompare(b.title)
-        })
-
-        // First, find any video with progress > 0 but not completed (user was watching but didn't finish)
-        const videoInProgress = courseVideos.find(video =>
-            video.progress && video.progress > 0 && !video.completed
-        )
-
-        if (videoInProgress) {
-            return videoInProgress
+        if (!course || !course.videos || course.videos.length === 0) {
+            console.log('🎬 No course or videos available')
+            return null
         }
 
-        // If no video in progress, find the first uncompleted video after the last completed one
-        const completedVideos = courseVideos.filter(video => video.completed)
+        // Use the videos in their original array order (serial numbers are based on array index)
+        const courseVideos = [...course.videos]
 
-        if (completedVideos.length === 0) {
-            // No videos completed, start with first video
+        console.log('🎬 Course videos in order:', courseVideos.map((v, index) => ({
+            serialNumber: index + 1,
+            title: v.title,
+            completed: v.completed
+        })))
+
+        // Find the first video that is NOT completed
+        const firstUncompletedVideo = courseVideos.find(video => !video.completed)
+
+        if (firstUncompletedVideo) {
+            const videoIndex = courseVideos.indexOf(firstUncompletedVideo)
+            console.log('🎬 Found first uncompleted video:', firstUncompletedVideo.title, `(Serial #${videoIndex + 1})`)
+            return firstUncompletedVideo
+        } else {
+            console.log('🎬 All videos completed, restarting from first video:', courseVideos[0].title, '(Serial #1)')
             return courseVideos[0]
         }
-
-        if (completedVideos.length === courseVideos.length) {
-            // All videos completed, restart from the first video
-            return courseVideos[0]
-        }
-
-        // Find the first uncompleted video
-        const nextVideo = courseVideos.find(video => !video.completed)
-        return nextVideo || courseVideos[0]
     }
 
     // Handler for "Start where you left" button
@@ -393,10 +472,10 @@ const Dashboard = () => {
             <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in">
                 {/* Welcome Header */}
                 <div className="mb-12">
-                    <h1 className="text-5xl lg:text-6xl font-black text-white mb-4 tracking-tight leading-none">
+                    <h1 className="text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-4 tracking-tight leading-none">
                         Welcome back!
                     </h1>
-                    <p className="text-xl text-gray-300 font-medium">
+                    <p className="text-xl text-gray-600 dark:text-gray-300 font-medium">
                         Here's your learning progress overview
                     </p>
                 </div>
@@ -610,55 +689,76 @@ const Dashboard = () => {
 
                 {/* Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                    {/* Recent Activity */}
+                    {/* Weekly Progress & Goals */}
                     <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <div className="flex items-center justify-between mb-6">
                             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
-                                <Clock className="w-5 h-5 text-indigo-500" />
-                                <span>Recent Activity</span>
+                                <Target className="w-5 h-5 text-green-500" />
+                                <span>Weekly Progress</span>
                             </h3>
                             <Link
-                                to="/library"
-                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
+                                to="/analytics"
+                                className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 text-sm font-medium transition-colors"
                             >
-                                View All
+                                View Details
                             </Link>
                         </div>
 
-                        <div className="space-y-3">
-                            {recentActivityList.length > 0 ? (
-                                recentActivityList.map((activity) => {
-                                    const display = getActivityDisplay(activity)
-                                    return (
-                                        <div key={activity.id} className="flex items-center space-x-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group" onClick={() => handleActivityClick(activity)}>
-                                            <div className={`w-12 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${display.bgColor} ${display.hoverColor}`}>
-                                                {display.icon}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
-                                                    {display.title}
-                                                </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                    {display.subtitle}
-                                                </p>
-                                            </div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {getRelativeTime(activity.timestamp)}
-                                            </p>
-                                        </div>
-                                    )
-                                })
-                            ) : (
-                                <div className="text-center py-8">
-                                    <Clock className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                                        No recent activity yet
-                                    </p>
-                                    <p className="text-xs text-gray-400 dark:text-gray-500">
-                                        Start watching videos to see your activity here
-                                    </p>
+                        {/* Weekly Stats */}
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20">
+                                <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                                    {Math.round(weeklyProgress)}%
                                 </div>
-                            )}
+                                <div className="text-xs text-green-600 dark:text-green-400 font-medium">
+                                    Weekly Progress
+                                </div>
+                            </div>
+                            <div className="text-center p-4 rounded-xl bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900/20 dark:to-blue-800/20">
+                                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                                    {completedVideos}
+                                </div>
+                                <div className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                                    Videos Completed
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Weekly Goal Progress */}
+                        <div className="mb-4">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Weekly Goal</span>
+                                <div className="flex items-center space-x-2">
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">{weeklyGoal} videos</span>
+                                    <button
+                                        onClick={openGoalSettings}
+                                        className="p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                                        title="Change weekly goal"
+                                    >
+                                        <Settings className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div
+                                    className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-500"
+                                    style={{ width: `${weeklyProgress}%` }}
+                                />
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {thisWeekVideosWatched} of {weeklyGoal} videos completed this week
+                            </div>
+                        </div>
+
+                        {/* Daily Streak */}
+                        <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900/20 dark:to-orange-800/20">
+                            <div className="flex items-center space-x-2">
+                                <Award className="w-5 h-5 text-orange-500" />
+                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Streak</span>
+                            </div>
+                            <div className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                                {calculateCurrentStreak()} days
+                            </div>
                         </div>
                     </div>
 
@@ -763,6 +863,77 @@ const Dashboard = () => {
                     isOpen={showCourseImporter}
                     onClose={() => setShowCourseImporter(false)}
                 />
+
+                {/* Weekly Goal Setting Modal */}
+                {showGoalModal && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowGoalModal(false)} />
+                        <div className="glass-card-frosted p-8 max-w-md w-full relative">
+                            <div className="text-center mb-6">
+                                <Target className="w-12 h-12 text-green-500 mx-auto mb-4" />
+                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                                    Set Your Weekly Learning Goal
+                                </h3>
+                                <p className="text-gray-600 dark:text-gray-400">
+                                    Choose how many videos you want to complete each week
+                                </p>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Weekly Goal (videos)
+                                    </label>
+                                    <div className="flex items-center space-x-4">
+                                        <button
+                                            onClick={() => setTempGoal(Math.max(1, tempGoal - 1))}
+                                            className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                        >
+                                            <span className="text-lg font-bold text-gray-700 dark:text-gray-300">-</span>
+                                        </button>
+                                        <div className="flex-1 text-center">
+                                            <span className="text-3xl font-bold text-gray-900 dark:text-white">
+                                                {tempGoal}
+                                            </span>
+                                        </div>
+                                        <button
+                                            onClick={() => setTempGoal(tempGoal + 1)}
+                                            className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                        >
+                                            <span className="text-lg font-bold text-gray-700 dark:text-gray-300">+</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900/20 dark:to-green-800/20 p-4 rounded-xl">
+                                    <div className="text-center">
+                                        <div className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">
+                                            {Math.round((thisWeekVideosWatched / tempGoal) * 100)}%
+                                        </div>
+                                        <div className="text-sm text-green-600 dark:text-green-400">
+                                            Current Progress
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="flex space-x-3">
+                                    <button
+                                        onClick={() => setShowGoalModal(false)}
+                                        className="flex-1 px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={handleSaveGoal}
+                                        className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                    >
+                                        Save Goal
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     )

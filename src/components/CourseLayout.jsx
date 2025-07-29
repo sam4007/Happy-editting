@@ -57,11 +57,11 @@ const CourseLayout = ({ videos, courseName, instructor, compact = false, current
 
             {/* Video List */}
             <div className="glass-card-frosted overflow-hidden">
-                <div className="divide-y divide-white/10 dark:divide-white/5">
+                <div className="divide-y divide-gray-200 dark:divide-white/5">
                     {videos.map((video, videoIndex) => (
                         <div
                             key={video.id}
-                            className={`flex items-center hover:bg-white/10 dark:hover:bg-white/5 backdrop-blur-sm transition-colors duration-200 group cursor-pointer ${compact ? 'gap-3 px-4 py-3' : 'gap-4 px-5 py-4'} ${video.id === currentVideoId ? 'bg-primary-50/30 dark:bg-primary-900/20' : ''}`}
+                            className={`flex items-center backdrop-blur-sm cursor-pointer border-l-2 border-l-transparent ${compact ? 'gap-3 px-4 py-3' : 'gap-4 px-5 py-4'} ${video.id === currentVideoId ? 'bg-primary-50/30 dark:bg-primary-900/20 border-l-primary-500' : ''}`}
                         >
                             {/* Serial Number */}
                             <div className="flex-shrink-0 w-8 h-8 bg-white/30 dark:bg-white/15 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 dark:border-white/10 shadow-sm">
@@ -73,12 +73,12 @@ const CourseLayout = ({ videos, courseName, instructor, compact = false, current
                             {/* Completion Checkbox */}
                             <button
                                 onClick={() => toggleVideoCompletion(video)}
-                                className="flex-shrink-0 p-1 rounded-full hover:bg-white/10 dark:hover:bg-white/5 transition-colors duration-200"
+                                className="flex-shrink-0 p-1 rounded-full"
                             >
                                 {video.completed ? (
                                     <CheckCircle className="w-5 h-5 text-green-500" />
                                 ) : (
-                                    <Circle className="w-5 h-5 text-gray-400 dark:text-gray-500 hover:text-green-500 dark:hover:text-green-400 transition-colors duration-200" />
+                                    <Circle className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                                 )}
                             </button>
 
@@ -91,9 +91,9 @@ const CourseLayout = ({ videos, courseName, instructor, compact = false, current
                             <div className="flex-1 min-w-0 mr-2">
                                 <button
                                     onClick={() => handleVideoClick(video)}
-                                    className="text-left w-full group"
+                                    className="text-left w-full"
                                 >
-                                    <h4 className={`font-semibold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors duration-200 truncate ${compact ? 'text-sm' : 'text-base'} leading-tight`}>
+                                    <h4 className={`font-semibold text-gray-900 dark:text-white truncate ${compact ? 'text-sm' : 'text-base'} leading-tight`}>
                                         {video.title}
                                     </h4>
                                     <div className={`flex items-center gap-2 mt-2 text-gray-600 dark:text-gray-400 ${compact ? 'text-xs' : 'text-sm'} flex-wrap`}>
@@ -116,7 +116,7 @@ const CourseLayout = ({ videos, courseName, instructor, compact = false, current
                             {/* Play Button */}
                             <button
                                 onClick={() => handleVideoClick(video)}
-                                className="flex-shrink-0 w-9 h-9 bg-white/30 dark:bg-white/15 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/40 dark:hover:bg-white/25 transition-colors duration-200 border border-white/20 dark:border-white/10"
+                                className="flex-shrink-0 w-9 h-9 bg-white/30 dark:bg-white/15 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/20 dark:border-white/10"
                             >
                                 <Play className="w-4 h-4 text-primary-600 dark:text-primary-400 ml-0.5" />
                             </button>
