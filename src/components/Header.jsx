@@ -15,7 +15,7 @@ const Header = ({ sidebarOpen, setSidebarOpen }) => {
     }
 
     return (
-        <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-black/60 backdrop-blur-2xl border-b border-white/20 dark:border-white/10">
+        <header className="fixed top-0 left-0 right-0 z-50 bg-white/70 dark:bg-black/60 backdrop-blur-2xl border-b border-gray-200 dark:border-white/10">
             <div className="max-w-none px-6 lg:px-8">
                 <div className="flex items-center justify-between h-14">
                     {/* Left section */}

@@ -36,7 +36,7 @@ const CustomSelect = ({
         if (isOpen && selectRef.current) {
             const rect = selectRef.current.getBoundingClientRect()
             setDropdownPosition({
-                top: rect.bottom + window.scrollY + 4,
+                top: rect.bottom + window.scrollY + 8,
                 left: rect.left + window.scrollX,
                 width: rect.width
             })
@@ -59,15 +59,15 @@ const CustomSelect = ({
     const dropdownPortal = isOpen && createPortal(
         <div
             data-dropdown-portal
-            className="fixed z-[9999] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto"
+            className="fixed z-[9999] bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 rounded-2xl shadow-2xl max-h-60 overflow-auto"
             style={{
                 top: dropdownPosition.top,
                 left: dropdownPosition.left,
                 width: dropdownPosition.width,
-                minWidth: '120px'
+                minWidth: '140px'
             }}
         >
-            <div className="py-1">
+            <div className="py-2">
                 {options.map((option, index) => (
                     <button
                         key={index}
@@ -77,12 +77,17 @@ const CustomSelect = ({
                             e.stopPropagation()
                             handleOptionClick(option)
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm transition-colors duration-150 ${option === value
-                            ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
-                            : 'text-gray-900 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        className={`w-full text-left px-4 py-3 text-sm font-medium transition-all duration-200 ${option === value
+                            ? 'bg-gradient-to-r from-indigo-500/10 to-purple-500/10 text-indigo-600 dark:text-indigo-400 border-r-2 border-indigo-500'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 hover:text-gray-900 dark:hover:text-white'
                             }`}
                     >
-                        {option}
+                        <div className="flex items-center justify-between">
+                            <span className="truncate">{option}</span>
+                            {option === value && (
+                                <div className="w-2 h-2 bg-indigo-500 rounded-full ml-2 flex-shrink-0"></div>
+                            )}
+                        </div>
                     </button>
                 ))}
             </div>
@@ -96,13 +101,13 @@ const CustomSelect = ({
             <button
                 type="button"
                 onClick={toggleDropdown}
-                className="input-premium w-full text-left flex items-center justify-between focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full text-left flex items-center justify-between px-4 py-3 bg-white/10 dark:bg-gray-800/50 backdrop-blur-sm border border-white/20 dark:border-gray-700/50 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-white/20 dark:hover:bg-gray-800/70 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all duration-200 group"
             >
-                <span className="block truncate">
+                <span className="block truncate font-medium">
                     {selectedOption || placeholder}
                 </span>
                 <ChevronDown
-                    className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
+                    className={`w-4 h-4 text-gray-500 dark:text-gray-400 transition-all duration-200 group-hover:text-indigo-500 ${isOpen ? 'transform rotate-180 text-indigo-500' : ''
                         }`}
                 />
             </button>

@@ -118,10 +118,10 @@ const Library = () => {
             return `Favorite Videos (${displayVideos.length})`
         } else if (activeFilter === 'watch-history') {
             return `Watch History (${displayVideos.length})`
-        } else if (selectedCategory) {
-            return `${selectedCategory} (${displayVideos.length})`
+        } else if (categoryFilter && categoryFilter !== 'All') {
+            return `${categoryFilter} (${displayVideos.length})`
         }
-        return `Video Library (${displayVideos.length})`
+        return `All (${displayVideos.length})`
     }
 
     const getHeaderDescription = () => {
@@ -224,14 +224,24 @@ const Library = () => {
 
             {/* Main Content */}
             <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in">
+                {/* Library Header */}
+                <div className="mb-12">
+                    <h1 className="text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-4 tracking-tight leading-none">
+                        Library
+                    </h1>
+                    <p className="text-xl text-gray-600 dark:text-gray-300 font-medium">
+                        Organize and discover your learning content
+                    </p>
+                </div>
+
                 {/* Header */}
                 <div className="mb-8">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center space-x-3 mb-2">
-                                <h1 className="text-3xl font-light text-gray-900 dark:text-white">
+                                <h2 className="text-3xl font-light text-gray-900 dark:text-white">
                                     {getHeaderText()}
-                                </h1>
+                                </h2>
                                 {activeFilter && (
                                     <button
                                         onClick={clearFilter}
@@ -242,9 +252,7 @@ const Library = () => {
                                     </button>
                                 )}
                             </div>
-                            <p className="text-gray-600 dark:text-gray-400 mb-4">
-                                {getHeaderDescription()}
-                            </p>
+
 
                             {/* Filter Badge */}
                             {activeFilter && (
