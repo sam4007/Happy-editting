@@ -523,20 +523,20 @@ const VideoPlayer = () => {
                                         </div>
 
                                         {/* Timestamped Notes List */}
-                                        <div className="space-y-3 h-64 overflow-y-auto overflow-x-hidden modern-scrollbar px-1">
+                                        <div className="space-y-2 h-64 overflow-y-auto overflow-x-hidden modern-scrollbar">
                                             {videoNotes.map((note) => (
                                                 <div
                                                     key={note.id}
                                                     onClick={() => handleNoteClick(note.timestamp)}
-                                                    className="p-2.5 mx-1 glass-card hover:scale-[1.015] transition-all duration-300 cursor-pointer max-w-full"
+                                                    className="p-2 glass-card hover:scale-[1.015] transition-all duration-300 cursor-pointer w-full"
                                                     title="Click to jump to this timestamp"
                                                 >
-                                                    <div className="flex items-start justify-between mb-2 gap-2">
-                                                        <span className="text-xs text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20 px-2 py-1 rounded-md whitespace-nowrap flex-shrink-0">
+                                                    <div className="flex items-start justify-between mb-1.5 gap-1">
+                                                        <span className="text-xs text-primary-600 dark:text-primary-400 font-medium bg-primary-50 dark:bg-primary-900/20 px-1.5 py-0.5 rounded-md whitespace-nowrap flex-shrink-0">
                                                             📍 {formatTime(note.timestamp)}
                                                         </span>
                                                         <div className="flex items-center space-x-1 flex-shrink-0">
-                                                            <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-20">
+                                                            <span className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-16">
                                                                 {new Date(note.createdAt).toLocaleDateString()}
                                                                 {note.updatedAt && ' (edited)'}
                                                             </span>
@@ -545,7 +545,7 @@ const VideoPlayer = () => {
                                                                     e.stopPropagation()
                                                                     handleEditNote(note)
                                                                 }}
-                                                                className="p-1 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-shrink-0"
+                                                                className="p-0.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex-shrink-0"
                                                                 title="Edit note"
                                                             >
                                                                 <Edit className="w-3 h-3" />
@@ -555,7 +555,7 @@ const VideoPlayer = () => {
                                                                     e.stopPropagation()
                                                                     handleDeleteNote(note.id)
                                                                 }}
-                                                                className="p-1 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors flex-shrink-0"
+                                                                className="p-0.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors flex-shrink-0"
                                                                 title="Delete note"
                                                             >
                                                                 <Trash2 className="w-3 h-3" />
@@ -563,33 +563,33 @@ const VideoPlayer = () => {
                                                         </div>
                                                     </div>
                                                     {editingNote === note.id ? (
-                                                        <div className="space-y-3 max-w-full">
+                                                        <div className="space-y-2 w-full">
                                                             <textarea
                                                                 value={editNoteContent}
                                                                 onChange={(e) => setEditNoteContent(e.target.value)}
                                                                 placeholder="Edit your note..."
-                                                                className="w-full p-3 glass-card text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none border-0 focus:ring-2 focus:ring-primary-500/50 transition-all duration-300 min-w-0"
-                                                                rows="3"
+                                                                className="w-full p-2 glass-card text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 resize-none border-0 focus:ring-2 focus:ring-primary-500/50 transition-all duration-300 min-w-0 text-sm"
+                                                                rows="2"
                                                             />
-                                                            <div className="flex flex-wrap gap-2">
+                                                            <div className="flex flex-wrap gap-1">
                                                                 <button
                                                                     onClick={handleSaveNote}
-                                                                    className="flex items-center space-x-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-700 dark:text-green-300 hover:bg-green-500/30 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300"
+                                                                    className="flex items-center space-x-1 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-700 dark:text-green-300 hover:bg-green-500/30 px-2 py-1 rounded text-xs font-medium transition-all duration-300"
                                                                 >
-                                                                    <Save className="w-4 h-4" />
+                                                                    <Save className="w-3 h-3" />
                                                                     <span>Save</span>
                                                                 </button>
                                                                 <button
                                                                     onClick={handleCancelEdit}
-                                                                    className="flex items-center space-x-2 bg-gray-500/20 backdrop-blur-sm border border-gray-400/30 text-gray-700 dark:text-gray-300 hover:bg-gray-500/30 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-300"
+                                                                    className="flex items-center space-x-1 bg-gray-500/20 backdrop-blur-sm border border-gray-400/30 text-gray-700 dark:text-gray-300 hover:bg-gray-500/30 px-2 py-1 rounded text-xs font-medium transition-all duration-300"
                                                                 >
-                                                                    <X className="w-4 h-4" />
+                                                                    <X className="w-3 h-3" />
                                                                     <span>Cancel</span>
                                                                 </button>
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words overflow-hidden">
+                                                        <div className="text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words overflow-hidden leading-relaxed">
                                                             {note.note}
                                                         </div>
                                                     )}

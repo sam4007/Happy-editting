@@ -46,6 +46,7 @@ import { useVideo } from '../contexts/VideoContext'
 import Calendar from '../components/Calendar'
 import WeeklyStreakBoard from '../components/WeeklyStreakBoard'
 import LearningInsights from '../components/LearningInsights'
+import AchievementSystem from '../components/AchievementSystem'
 import CustomSelect from '../components/CustomSelect'
 import { calculateCurrentStreak, calculateLongestStreak } from '../utils/streakCalculator'
 
@@ -240,6 +241,9 @@ const Analytics = () => {
         // Real productivity hours from user data
         const productivityHours = calculateProductivityHours()
 
+        // Calculate total watch time in minutes for achievements
+        const totalWatchTime = completedDuration
+
         return {
             totalVideos,
             completedVideos,
@@ -258,7 +262,8 @@ const Analytics = () => {
             longestStreak,
             categoryStats,
             productivityHours,
-            weeksActive
+            weeksActive,
+            totalWatchTime
         }
     }, [filteredVideos, notes, bookmarks, favorites, dailyActivity])
 
@@ -437,15 +442,15 @@ ${filteredVideos.map(video => {
             </div>
 
             {/* Main Content */}
-            <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
+            <div className="relative z-10 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 animate-fade-in">
                 {/* Header */}
-                <div className="glass-card p-8">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <div className="glass-card p-4 sm:p-6 lg:p-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+                        <div className="flex-1">
+                            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                                 Learning Analytics
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-400">
+                            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                                 Comprehensive insights into your learning journey
                                 {selectedCategory !== 'all' && (
                                     <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -458,19 +463,19 @@ ${filteredVideos.map(video => {
                             </p>
                         </div>
 
-                        <div className="flex items-center space-x-4">
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                             {/* Category Filter */}
                             <CustomSelect
                                 value={selectedCategory}
                                 onChange={handleCategoryChange}
                                 options={categories}
-                                className="min-w-[120px]"
+                                className="w-full sm:min-w-[120px]"
                             />
 
                             {/* Export Button */}
                             <button
                                 onClick={() => setShowExportModal(true)}
-                                className="btn-primary"
+                                className="btn-primary w-full sm:w-auto"
                             >
                                 <Download className="w-4 h-4 mr-2" />
                                 Export
@@ -480,12 +485,12 @@ ${filteredVideos.map(video => {
                 </div>
 
                 {/* Main Statistics Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {mainStats.map((stat, index) => (
-                        <div key={index} className="glass-card-frosted p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className={`w-12 h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
-                                    <stat.icon className="w-6 h-6 text-white" />
+                        <div key={index} className="glass-card-frosted p-4 sm:p-6 group hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                            <div className="flex items-center justify-between mb-3 sm:mb-4">
+                                <div className={`w-10 h-10 sm:w-12 sm:h-12 ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                                    <stat.icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                                 </div>
                                 <div className={`flex items-center space-x-1 ${stat.positive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                     {stat.positive ? <ArrowUp className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
@@ -493,10 +498,10 @@ ${filteredVideos.map(video => {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                                     {stat.title}
                                 </p>
-                                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                <h3 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                                     {stat.value}
                                 </h3>
                                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -508,15 +513,15 @@ ${filteredVideos.map(video => {
                 </div>
 
                 {/* Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                     {/* Completion Progress */}
-                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
-                                <Target className="w-5 h-5 text-emerald-500" />
+                    <div className="glass-card-frosted p-4 sm:p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-2 sm:space-y-0">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                                <Target className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500" />
                                 <span>Completion Progress</span>
                             </h3>
-                            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                            <div className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                                 {analytics.completionRate.toFixed(1)}%
                             </div>
                         </div>
@@ -535,26 +540,26 @@ ${filteredVideos.map(video => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="text-center p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
-                                    <div className="w-10 h-10 bg-emerald-500 rounded-full mx-auto mb-3 flex items-center justify-center">
-                                        <CheckCircle className="w-5 h-5 text-white" />
+                            <div className="grid grid-cols-3 gap-2 sm:gap-4">
+                                <div className="text-center p-2 sm:p-4 rounded-xl bg-emerald-50 dark:bg-emerald-900/20">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-emerald-500 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                     </div>
-                                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400">{analytics.completedVideos}</p>
+                                    <p className="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">{analytics.completedVideos}</p>
                                     <p className="text-xs text-gray-600 dark:text-gray-400">Completed</p>
                                 </div>
-                                <div className="text-center p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20">
-                                    <div className="w-10 h-10 bg-yellow-500 rounded-full mx-auto mb-3 flex items-center justify-center">
-                                        <PlayCircle className="w-5 h-5 text-white" />
+                                <div className="text-center p-2 sm:p-4 rounded-xl bg-yellow-50 dark:bg-yellow-900/20">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-yellow-500 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                                        <PlayCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                     </div>
-                                    <p className="text-xl font-bold text-yellow-600 dark:text-yellow-400">{analytics.inProgressVideos}</p>
+                                    <p className="text-lg sm:text-xl font-bold text-yellow-600 dark:text-yellow-400">{analytics.inProgressVideos}</p>
                                     <p className="text-xs text-gray-600 dark:text-gray-400">In Progress</p>
                                 </div>
-                                <div className="text-center p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
-                                    <div className="w-10 h-10 bg-gray-400 rounded-full mx-auto mb-3 flex items-center justify-center">
-                                        <Pause className="w-5 h-5 text-white" />
+                                <div className="text-center p-2 sm:p-4 rounded-xl bg-gray-50 dark:bg-gray-800">
+                                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-400 rounded-full mx-auto mb-2 sm:mb-3 flex items-center justify-center">
+                                        <Pause className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                     </div>
-                                    <p className="text-xl font-bold text-gray-600 dark:text-gray-400">{analytics.notStartedVideos}</p>
+                                    <p className="text-lg sm:text-xl font-bold text-gray-600 dark:text-gray-400">{analytics.notStartedVideos}</p>
                                     <p className="text-xs text-gray-600 dark:text-gray-400">Not Started</p>
                                 </div>
                             </div>
@@ -562,13 +567,13 @@ ${filteredVideos.map(video => {
                     </div>
 
                     {/* Study Time Analysis */}
-                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
-                                <Clock className="w-5 h-5 text-purple-500" />
+                    <div className="glass-card-frosted p-4 sm:p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 space-y-2 sm:space-y-0">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-purple-500" />
                                 <span>Study Time Analysis</span>
                             </h3>
-                            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                            <div className="text-xl sm:text-2xl font-bold text-purple-600 dark:text-purple-400">
                                 {formatDuration(analytics.completedDuration)}
                             </div>
                         </div>
@@ -587,22 +592,22 @@ ${filteredVideos.map(video => {
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
-                                    <div className="flex items-center space-x-3 mb-2">
-                                        <Clock className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Time</span>
+                            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                                <div className="p-3 sm:p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20">
+                                    <div className="flex items-center space-x-2 sm:space-x-3 mb-2">
+                                        <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
+                                        <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Total Time</span>
                                     </div>
-                                    <p className="text-lg font-bold text-purple-600 dark:text-purple-400">
+                                    <p className="text-base sm:text-lg font-bold text-purple-600 dark:text-purple-400">
                                         {formatDuration(analytics.totalDuration)}
                                     </p>
                                 </div>
-                                <div className="p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20">
-                                    <div className="flex items-center space-x-3 mb-2">
-                                        <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
-                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Remaining</span>
+                                <div className="p-3 sm:p-4 rounded-xl bg-indigo-50 dark:bg-indigo-900/20">
+                                    <div className="flex items-center space-x-2 sm:space-x-3 mb-2">
+                                        <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 dark:text-indigo-400" />
+                                        <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Remaining</span>
                                     </div>
-                                    <p className="text-lg font-bold text-indigo-600 dark:text-indigo-400">
+                                    <p className="text-base sm:text-lg font-bold text-indigo-600 dark:text-indigo-400">
                                         {formatDuration(analytics.totalDuration - analytics.completedDuration)}
                                     </p>
                                 </div>
@@ -612,14 +617,14 @@ ${filteredVideos.map(video => {
                 </div>
 
                 {/* Category Distribution & Productivity Hours */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                     {/* Category Distribution */}
-                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="glass-card-frosted p-4 sm:p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4 sm:mb-6">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                                 Category Performance
                             </h3>
-                            <BarChart3 className="w-5 h-5 text-gray-500" />
+                            <BarChart3 className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                         </div>
 
                         <div className="space-y-4">
@@ -658,12 +663,12 @@ ${filteredVideos.map(video => {
                     </div>
 
                     {/* Productivity Hours - Real-time with Curves */}
-                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="glass-card-frosted p-4 sm:p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                        <div className="flex items-center justify-between mb-4 sm:mb-6">
+                            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                                 Daily Activity Pattern
                             </h3>
-                            <LineChart className="w-5 h-5 text-gray-500" />
+                            <LineChart className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                         </div>
 
                         <div className="space-y-6">
@@ -735,13 +740,13 @@ ${filteredVideos.map(video => {
                             </div>
 
                             {/* Peak hours info */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                        <Zap className="w-4 h-4 text-blue-600" />
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">Peak Hour</span>
+                            <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-2 sm:p-3">
+                                    <div className="flex items-center space-x-1 sm:space-x-2 mb-1">
+                                        <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600" />
+                                        <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">Peak Hour</span>
                                     </div>
-                                    <p className="text-lg font-bold text-blue-600">
+                                    <p className="text-sm sm:text-lg font-bold text-blue-600">
                                         {(() => {
                                             const peakIndex = analytics.productivityHours.indexOf(Math.max(...analytics.productivityHours))
                                             const hour = peakIndex === 0 ? 12 : peakIndex > 12 ? peakIndex - 12 : peakIndex
@@ -750,12 +755,12 @@ ${filteredVideos.map(video => {
                                         })()}
                                     </p>
                                 </div>
-                                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3">
-                                    <div className="flex items-center space-x-2 mb-1">
-                                        <Activity className="w-4 h-4 text-green-600" />
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">Active Hours</span>
+                                <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-2 sm:p-3">
+                                    <div className="flex items-center space-x-1 sm:space-x-2 mb-1">
+                                        <Activity className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+                                        <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">Active Hours</span>
                                     </div>
-                                    <p className="text-lg font-bold text-green-600">
+                                    <p className="text-sm sm:text-lg font-bold text-green-600">
                                         {analytics.productivityHours.filter(h => h > 10).length}h/day
                                     </p>
                                 </div>
@@ -765,12 +770,12 @@ ${filteredVideos.map(video => {
                 </div>
 
                 {/* Learning Activity Calendar - GitHub Style */}
-                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300 mb-8">
-                    <div className="flex items-center justify-between mb-6">
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <div className="glass-card-frosted p-4 sm:p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300 mb-6 sm:mb-8">
+                    <div className="flex items-center justify-between mb-4 sm:mb-6">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                             Learning Activity Calendar
                         </h3>
-                        <CalendarIcon className="w-5 h-5 text-gray-500" />
+                        <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
                     </div>
 
                     <div className="space-y-4">
@@ -955,98 +960,37 @@ ${filteredVideos.map(video => {
                     </div>
                 </div>
 
-                {/* Learning Insights & Achievements */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    {/* Learning Insights */}
-                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                Learning Insights
-                            </h3>
-                            <Brain className="w-5 h-5 text-gray-500" />
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex items-start space-x-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <TrendingUp className="w-4 h-4 text-white" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">Strong Performance</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        You're completing {analytics.videosPerWeek.toFixed(1)} videos per week on average
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start space-x-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <Flame className="w-4 h-4 text-white" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">Consistent Learning</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        Current streak of {analytics.currentStreak} days. Keep it up!
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-start space-x-3 p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <Brain className="w-4 h-4 text-white" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">Active Note-Taking</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                                        {analytics.totalNotes} notes and {analytics.totalBookmarks} bookmarks created
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Achievements */}
-                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                Achievements
-                            </h3>
-                            <Trophy className="w-5 h-5 text-gray-500" />
-                        </div>
-
-                        <div className="space-y-4">
-                            <div className="flex items-center space-x-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
-                                <div className="w-12 h-12 bg-yellow-500 rounded-full flex items-center justify-center">
-                                    <Star className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">First Steps</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Started your learning journey</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center space-x-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
-                                    <CheckCircle className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">Completionist</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Completed {analytics.completedVideos} videos</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center space-x-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center">
-                                    <Clock className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <p className="font-medium text-gray-900 dark:text-white">Time Investor</p>
-                                    <p className="text-sm text-gray-600 dark:text-gray-400">Invested {formatDuration(analytics.completedDuration)} in learning</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                {/* Learning Insights */}
+                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300 mb-8">
+                    <LearningInsights
+                        dailyActivity={dailyActivity}
+                        completedVideos={analytics.completedVideos}
+                        totalVideos={analytics.totalVideos}
+                        watchHistory={watchHistory}
+                        favorites={favorites}
+                        currentStreak={analytics.currentStreak}
+                        longestStreak={analytics.longestStreak}
+                        totalNotes={analytics.totalNotes}
+                        totalBookmarks={analytics.totalBookmarks}
+                        videosPerWeek={analytics.videosPerWeek}
+                        totalWatchTime={analytics.totalWatchTime}
+                    />
                 </div>
+
+                {/* Achievement System */}
+                <AchievementSystem
+                    completedVideos={analytics.completedVideos}
+                    totalVideos={analytics.totalVideos}
+                    watchHistory={watchHistory}
+                    notes={notes}
+                    bookmarks={bookmarks}
+                    dailyActivity={dailyActivity}
+                    totalWatchTime={analytics.totalWatchTime}
+                    currentStreak={analytics.currentStreak}
+                    longestStreak={analytics.longestStreak}
+                    weeklyGoal={5} // Default weekly goal
+                    weeklyProgress={analytics.videosPerWeek * 5} // Calculate based on videos per week
+                />
 
                 {/* Recent Activity */}
                 <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
@@ -1103,17 +1047,17 @@ ${filteredVideos.map(video => {
 
                 {/* Export Modal */}
                 {showExportModal && (
-                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
-                            <div className="flex items-center justify-between mb-6">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-6 max-w-md w-full mx-4">
+                            <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                                     Export Analytics
                                 </h3>
                                 <button
                                     onClick={() => setShowExportModal(false)}
                                     className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                                 >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                     </svg>
                                 </button>
@@ -1129,18 +1073,18 @@ ${filteredVideos.map(video => {
                                         exportToCSV()
                                         setShowExportModal(false)
                                     }}
-                                    className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                    className="w-full flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                                            <FileText className="w-4 h-4 text-white" />
+                                    <div className="flex items-center space-x-2 sm:space-x-3">
+                                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                            <FileText className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <p className="font-medium text-gray-900 dark:text-white">CSV Export</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Detailed spreadsheet data</p>
+                                            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">CSV Export</p>
+                                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Detailed spreadsheet data</p>
                                         </div>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                                    <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
                                 </button>
 
                                 <button
@@ -1148,18 +1092,18 @@ ${filteredVideos.map(video => {
                                         exportToPDF()
                                         setShowExportModal(false)
                                     }}
-                                    className="w-full flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                                    className="w-full flex items-center justify-between p-3 sm:p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                                 >
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center">
-                                            <Download className="w-4 h-4 text-white" />
+                                    <div className="flex items-center space-x-2 sm:space-x-3">
+                                        <div className="w-6 h-6 sm:w-8 sm:h-8 bg-red-500 rounded-full flex items-center justify-center">
+                                            <Download className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                                         </div>
                                         <div className="text-left">
-                                            <p className="font-medium text-gray-900 dark:text-white">PDF Report</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400">Formatted analytics report</p>
+                                            <p className="text-sm sm:text-base font-medium text-gray-900 dark:text-white">PDF Report</p>
+                                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Formatted analytics report</p>
                                         </div>
                                     </div>
-                                    <ArrowRight className="w-4 h-4 text-gray-400" />
+                                    <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400" />
                                 </button>
                             </div>
                         </div>

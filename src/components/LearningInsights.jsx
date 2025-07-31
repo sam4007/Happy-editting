@@ -1,7 +1,21 @@
 import React from 'react'
 import { Target, TrendingUp, Award, Lightbulb, Calendar, CheckCircle, Star, Clock, Play, BookOpen } from 'lucide-react'
 
-const LearningInsights = ({ dailyActivity, completedVideos, totalVideos, watchHistory = [], favorites = [] }) => {
+const LearningInsights = ({
+    dailyActivity,
+    completedVideos,
+    totalVideos,
+    watchHistory = [],
+    favorites = [],
+    currentStreak = 0,
+    longestStreak = 0,
+    totalNotes = 0,
+    totalBookmarks = 0,
+    videosPerWeek = 0,
+    totalWatchTime = 0,
+    notes = {},
+    bookmarks = {}
+}) => {
 
     // Calculate today's activity
     const getTodaysActivity = () => {
@@ -84,10 +98,18 @@ const LearningInsights = ({ dailyActivity, completedVideos, totalVideos, watchHi
     const todaysActivity = getTodaysActivity()
     const thisWeekActivity = calculateThisWeekActivity()
     const momentum = calculateLearningMomentum()
-    const currentStreak = calculateStreak()
+    const calculatedStreak = calculateStreak()
     const weeklyGoal = 7 // 1 video per day goal
     const goalProgress = Math.min((thisWeekActivity / weeklyGoal) * 100, 100)
     const completionRate = totalVideos > 0 ? Math.round((completedVideos / totalVideos) * 100) : 0
+
+    // Use passed props if available, otherwise calculate
+    const finalCurrentStreak = currentStreak || calculatedStreak
+    const finalLongestStreak = longestStreak || 0
+    const finalTotalNotes = totalNotes || Object.values(notes || {}).reduce((acc, videoNotes) => acc + videoNotes.length, 0)
+    const finalTotalBookmarks = totalBookmarks || Object.values(bookmarks || {}).reduce((acc, videoBookmarks) => acc + videoBookmarks.length, 0)
+    const finalVideosPerWeek = videosPerWeek || 0
+    const finalTotalWatchTime = totalWatchTime || 0
 
     // Enhanced learning tips based on user's current status
     const getLearningTip = () => {
@@ -102,7 +124,7 @@ const LearningInsights = ({ dailyActivity, completedVideos, totalVideos, watchHi
         }
 
         if (todaysActivity === 0 && thisWeekActivity === 0) return tips.noActivity
-        if (currentStreak >= 3) return tips.goodStreak
+        if (finalCurrentStreak >= 3) return tips.goodStreak
         if (completionRate >= 80) return tips.highCompletion
         if (favorites.length >= 5) return tips.manyFavorites
         if (thisWeekActivity >= 5) return tips.recentWatcher
@@ -122,7 +144,7 @@ const LearningInsights = ({ dailyActivity, completedVideos, totalVideos, watchHi
         {
             icon: Target,
             title: "Consistent Learner",
-            unlocked: currentStreak >= 3,
+            unlocked: finalCurrentStreak >= 3,
             color: "text-green-500",
             description: "3+ day learning streak"
         },
@@ -209,9 +231,9 @@ const LearningInsights = ({ dailyActivity, completedVideos, totalVideos, watchHi
                         {momentum} in 3 days
                     </span>
                 </div>
-                {currentStreak > 0 && (
+                {finalCurrentStreak > 0 && (
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                        🔥 {currentStreak} day streak
+                        🔥 {finalCurrentStreak} day streak
                     </p>
                 )}
             </div>

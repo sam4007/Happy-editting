@@ -248,7 +248,7 @@ const Library = () => {
 
                             {/* Filter Badge */}
                             {activeFilter && (
-                                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium glass-card">
+                                <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium glass-card-frosted hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                                     {activeFilter === 'favorites' ? (
                                         <>
                                             <Star className="w-4 h-4 mr-2 text-yellow-500" />
@@ -269,21 +269,21 @@ const Library = () => {
                             <div className="flex flex-wrap gap-3">
                                 <button
                                     onClick={() => setShowPlaylistImporter(true)}
-                                    className="btn-secondary flex items-center space-x-2"
+                                    className="btn-secondary flex items-center space-x-2 hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
                                 >
                                     <Youtube className="w-4 h-4 text-red-500" />
                                     <span>Import Playlist</span>
                                 </button>
                                 <button
                                     onClick={() => setShowCourseImporter(true)}
-                                    className="btn-secondary flex items-center space-x-2"
+                                    className="btn-secondary flex items-center space-x-2 hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
                                 >
                                     <Download className="w-4 h-4 text-purple-500" />
                                     <span>Import Course</span>
                                 </button>
                                 <button
                                     onClick={() => setShowAddModal(true)}
-                                    className="btn-primary flex items-center space-x-2"
+                                    className="btn-primary flex items-center space-x-2 hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
                                 >
                                     <Plus className="w-4 h-4" />
                                     <span>Add Video</span>
@@ -293,18 +293,20 @@ const Library = () => {
                     </div>
 
                     {/* Search and Controls Bar */}
-                    <div className="glass-card p-4 mt-6">
+                    <div className="glass-card-frosted p-4 mt-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <div className="flex flex-col lg:flex-row gap-4 lg:items-center lg:justify-between">
                             {/* Search */}
                             <div className="relative flex-1 max-w-md">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Search videos, instructors, categories..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="input-premium pl-10"
-                                />
+                                <div className="flex items-center">
+                                    <Search className="w-4 h-4 text-gray-400 mr-3 flex-shrink-0" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search videos, instructors, categories..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="input-premium flex-1"
+                                    />
+                                </div>
                             </div>
 
                             <div className="flex items-center gap-4">
@@ -374,7 +376,7 @@ const Library = () => {
                             const completedCount = sectionVideos.filter(video => video.completed).length
 
                             return (
-                                <div key={sectionTitle} className="glass-card overflow-hidden">
+                                <div key={sectionTitle} className="glass-card-frosted overflow-hidden hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                                     {/* Section Header */}
                                     <div className="p-6 border-b border-white/10 dark:border-white/5">
                                         <button
@@ -442,7 +444,7 @@ const Library = () => {
                                                                 </button>
                                                             </div>
 
-                                                            <div className="glass-card p-4 h-full hover:scale-[1.02] transition-transform">
+                                                            <div className="glass-card-frosted p-4 h-full hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                                                                 {/* Video Thumbnail */}
                                                                 <div className="relative mb-4 rounded-xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 aspect-video">
                                                                     <div className="absolute inset-0 flex items-center justify-center">
@@ -492,7 +494,7 @@ const Library = () => {
                                                     {sectionVideos.map((video, index) => (
                                                         <div
                                                             key={video.id}
-                                                            className="flex items-center space-x-4 p-4 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group"
+                                                            className="glass-card-frosted flex items-center space-x-4 p-4 rounded-xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300 cursor-pointer group"
                                                             onClick={() => handleVideoClick(video)}
                                                         >
                                                             {/* Video Number */}

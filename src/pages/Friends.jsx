@@ -61,6 +61,7 @@ const Friends = () => {
     const [showFriendModal, setShowFriendModal] = useState(false)
     const [selectedFriendsFriends, setSelectedFriendsFriends] = useState([])
     const [loadingFriendsFriends, setLoadingFriendsFriends] = useState(false)
+    const [currentConversation, setCurrentConversation] = useState(null)
 
     // Load conversations when Messages tab is active
     useEffect(() => {
@@ -76,6 +77,52 @@ const Friends = () => {
             loadSelectedFriendsFriends(selectedFriend)
         }
     }, [selectedFriend])
+
+    // Load real-time friend data
+    useEffect(() => {
+        const loadRealTimeFriendData = async () => {
+            if (!user || friends.length === 0) return
+
+            try {
+                const updatedFriends = await Promise.all(
+                    friends.map(async (friend) => {
+                        try {
+                            const friendRef = doc(db, 'users', friend.id)
+                            const friendSnap = await getDoc(friendRef)
+
+                            if (friendSnap.exists()) {
+                                const friendData = friendSnap.data()
+                                const friendStats = friendData.stats || {}
+
+                                return {
+                                    ...friend,
+                                    stats: {
+                                        totalCourses: friendStats.totalCourses || 0,
+                                        completedCourses: friendStats.completedCourses || 0,
+                                        totalWatchTime: friendStats.totalWatchTime || 0,
+                                        studyHours: friendStats.studyHours || 0,
+                                        completionRate: friendStats.completionRate || 0
+                                    }
+                                }
+                            }
+                            return friend
+                        } catch (error) {
+                            console.error('Error loading friend data:', error)
+                            return friend
+                        }
+                    })
+                )
+
+                // Update friends with real-time data
+                // Note: This would require updating the friends state in the context
+                console.log('Real-time friend data loaded:', updatedFriends)
+            } catch (error) {
+                console.error('Error loading real-time friend data:', error)
+            }
+        }
+
+        loadRealTimeFriendData()
+    }, [user, friends])
 
     const loadFriendDetails = async (friend) => {
         setLoadingFriendDetails(true)
@@ -392,9 +439,67 @@ const Friends = () => {
         }
     }
 
+    const handleMessageFriend = async (friend) => {
+        try {
+            // Create or get existing chat ID
+            const chatId = [user.uid, friend.id].sort().join('_')
+
+            // Create a new conversation if it doesn't exist
+            const conversationExists = conversations.find(conv => conv.chatId === chatId)
+
+            if (!conversationExists) {
+                // Add to conversations list
+                const newConversation = {
+                    chatId,
+                    friend,
+                    latestMessage: {
+                        content: 'Start a conversation!',
+                        timestamp: new Date().toISOString(),
+                        senderId: user.uid
+                    },
+                    otherUserId: friend.id
+                }
+                setConversations(prev => [newConversation, ...prev])
+            }
+
+            // Set current conversation and navigate
+            setCurrentConversation(friend)
+            setMessage(`Opening chat with ${friend.displayName}...`)
+
+            // Navigate to the DM
+            setTimeout(() => {
+                window.location.href = `/messages/${friend.id}`
+            }, 500)
+
+        } catch (error) {
+            console.error('Error opening chat:', error)
+            setMessage('Failed to open chat: ' + error.message)
+            setTimeout(() => setMessage(''), 3000)
+        }
+    }
+
     const formatTime = (timestamp) => {
         if (!timestamp) return ''
-        const date = timestamp.toDate()
+
+        let date
+        try {
+            // Check if it's a Firestore timestamp
+            if (timestamp && typeof timestamp.toDate === 'function') {
+                date = timestamp.toDate()
+            } else if (timestamp instanceof Date) {
+                date = timestamp
+            } else if (typeof timestamp === 'string' || typeof timestamp === 'number') {
+                date = new Date(timestamp)
+            } else {
+                return ''
+            }
+        } catch (error) {
+            console.error('Error formatting timestamp:', error)
+            return ''
+        }
+
+        if (!date || isNaN(date.getTime())) return ''
+
         const now = new Date()
         const isToday = date.toDateString() === now.toDateString()
 
@@ -435,13 +540,13 @@ const Friends = () => {
             {/* Main Content */}
             <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto space-y-8 animate-fade-in">
                 {/* Header */}
-                <div className="glass-card p-8">
+                <div className="mb-12">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                            <h1 className="text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-4 tracking-tight leading-none">
                                 Friends
                             </h1>
-                            <p className="text-gray-600 dark:text-gray-400">
+                            <p className="text-xl text-gray-600 dark:text-gray-300 font-medium">
                                 Connect with fellow learners and share your progress
                             </p>
                         </div>
@@ -456,13 +561,13 @@ const Friends = () => {
 
                 {/* Message */}
                 {message && (
-                    <div className="glass-card p-6 border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-900/20">
+                    <div className="glass-card-frosted p-6 border-l-4 border-blue-500 bg-blue-50/50 dark:bg-blue-900/20 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <p className="text-blue-700 dark:text-blue-300 font-medium">{message}</p>
                     </div>
                 )}
 
                 {/* Search Section */}
-                <div className="glass-card p-6">
+                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex items-center space-x-3 mb-4">
                         <Search className="w-5 h-5 text-indigo-500" />
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -471,13 +576,12 @@ const Friends = () => {
                     </div>
                     <form onSubmit={handleSearch} className="flex gap-4">
                         <div className="flex-1 relative">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                             <input
                                 type="text"
                                 placeholder="Search users by email..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="input-premium pl-10"
+                                className="input-premium w-full"
                             />
                         </div>
                         <button
@@ -492,14 +596,14 @@ const Friends = () => {
 
                 {/* Search Results */}
                 {searchResults.length > 0 && (
-                    <div className="glass-card p-6">
+                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white flex items-center space-x-2">
                             <UserPlus className="w-5 h-5 text-green-500" />
                             <span>Search Results</span>
                         </h3>
                         <div className="space-y-3">
                             {searchResults.map(user => (
-                                <div key={user.id} className="flex items-center justify-between p-4 rounded-xl bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all">
+                                <div key={user.id} className="glass-card-frosted flex items-center justify-between p-4 rounded-xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                                     <div className="flex items-center space-x-3">
                                         <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
                                             <User className="w-6 h-6 text-white" />
@@ -562,7 +666,7 @@ const Friends = () => {
                 )}
 
                 {/* Tabs */}
-                <div className="glass-card p-6">
+                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                     <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
                         <button
                             onClick={() => setActiveTab('friends')}
@@ -614,60 +718,63 @@ const Friends = () => {
                                     </button>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     {friends.map(friend => (
-                                        <div key={friend.id} className="group relative p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-lg transition-all duration-300 cursor-pointer" onClick={() => handleFriendClick(friend)}>
-                                            <div className="flex items-center space-x-4 mb-4">
-                                                <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                                                    <User className="w-7 h-7 text-white" />
+                                        <div key={friend.id} className="glass-card-frosted group relative p-5 rounded-2xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300 cursor-pointer overflow-hidden" onClick={() => handleFriendClick(friend)}>
+                                            {/* Remove Button - Absolutely Positioned */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    removeFriend(friend.id)
+                                                }}
+                                                className="absolute top-3 right-3 p-2 rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 opacity-60 hover:opacity-100 z-10"
+                                                title="Remove friend"
+                                            >
+                                                <UserMinus className="w-4 h-4" />
+                                            </button>
+
+                                            {/* Header with Avatar */}
+                                            <div className="flex items-center space-x-3 mb-4 pr-10">
+                                                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                                    <User className="w-6 h-6 text-white" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                                                    <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                                                         {friend.displayName}
                                                     </h3>
-                                                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                                         {friend.email}
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            {/* Friend Stats */}
-                                            <div className="grid grid-cols-2 gap-4">
-                                                <div className="text-center p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
-                                                    <div className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-                                                        {friend.stats?.totalCourses || 0}
-                                                    </div>
-                                                    <div className="text-xs text-gray-600 dark:text-gray-400">Courses</div>
+                                            {/* Quick Stats */}
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-2 h-2 bg-indigo-500 rounded-full"></div>
+                                                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                                        {friend.stats?.totalCourses || friend.stats?.completedCourses || 0} courses
+                                                    </span>
                                                 </div>
-                                                <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/20">
-                                                    <div className="text-xl font-bold text-green-600 dark:text-green-400">
-                                                        {Math.round((friend.stats?.totalWatchTime || 0) / 3600)}h
-                                                    </div>
-                                                    <div className="text-xs text-gray-600 dark:text-gray-400">Study Time</div>
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                                        {Math.round((friend.stats?.totalWatchTime || friend.stats?.studyHours * 3600 || 0) / 3600)}h study
+                                                    </span>
                                                 </div>
                                             </div>
 
-                                            <div className="mt-4 flex space-x-2">
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        // Handle message functionality
-                                                    }}
-                                                    className="flex-1 btn-primary text-sm"
-                                                >
-                                                    <MessageCircle className="w-4 h-4 mr-1" />
-                                                    Message
-                                                </button>
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.stopPropagation()
-                                                        removeFriend(friend.id)
-                                                    }}
-                                                    className="btn-secondary text-sm px-3"
-                                                >
-                                                    <UserMinus className="w-4 h-4" />
-                                                </button>
-                                            </div>
+                                            {/* Action Button */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation()
+                                                    handleMessageFriend(friend)
+                                                }}
+                                                className="w-full btn-primary text-sm py-2.5 rounded-xl hover:scale-[1.02] transition-transform"
+                                            >
+                                                <MessageCircle className="w-4 h-4 mr-2 inline" />
+                                                Message
+                                            </button>
                                         </div>
                                     ))}
                                 </div>

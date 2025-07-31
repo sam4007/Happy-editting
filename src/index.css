@@ -560,6 +560,10 @@ body {
     animation: spin 6s linear infinite reverse;
 }
 
+.animate-slide-in-right {
+    animation: slide-in-right 0.5s ease-out forwards;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -607,6 +611,18 @@ body {
 
     to {
         transform: rotate(360deg);
+    }
+}
+
+@keyframes slide-in-right {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
     }
 }
 
