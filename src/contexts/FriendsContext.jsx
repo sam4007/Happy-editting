@@ -257,11 +257,30 @@ export const FriendsProvider = ({ children }) => {
             where('status', '==', 'pending')
         )
 
-        const unsubscribeRequests = onSnapshot(requestsQuery, (snapshot) => {
+        const unsubscribeRequests = onSnapshot(requestsQuery, async (snapshot) => {
             const requests = []
-            snapshot.forEach((doc) => {
-                requests.push({ id: doc.id, ...doc.data() })
-            })
+            for (const doc of snapshot.docs) {
+                const requestData = doc.data()
+                try {
+                    // Get the sender's profile information
+                    const senderDocRef = doc(db, 'users', requestData.from)
+                    const senderDoc = await getDoc(senderDocRef)
+                    if (senderDoc.exists()) {
+                        const senderData = senderDoc.data()
+                        requests.push({
+                            id: doc.id,
+                            ...requestData,
+                            photoURL: senderData.photoURL,
+                            displayName: senderData.displayName || senderData.email
+                        })
+                    } else {
+                        requests.push({ id: doc.id, ...requestData })
+                    }
+                } catch (error) {
+                    console.error('Error loading sender data:', error)
+                    requests.push({ id: doc.id, ...requestData })
+                }
+            }
             setFriendRequests(requests)
         })
 

@@ -886,7 +886,37 @@ export const VideoProvider = ({ children }) => {
             }
         })
 
-        return Object.values(playlists)
+        let playlistArray = Object.values(playlists)
+
+        // Apply custom order if stored
+        const orderKey = getStorageKey('playlistOrder')
+        const storedOrder = localStorage.getItem(orderKey)
+
+        if (storedOrder) {
+            try {
+                const orderIds = JSON.parse(storedOrder)
+                const orderedPlaylists = []
+                const unorderedPlaylists = []
+
+                // Separate ordered and unordered playlists
+                playlistArray.forEach(playlist => {
+                    const orderIndex = orderIds.indexOf(playlist.id)
+                    if (orderIndex !== -1) {
+                        orderedPlaylists[orderIndex] = playlist
+                    } else {
+                        unorderedPlaylists.push(playlist)
+                    }
+                })
+
+                // Combine ordered playlists with unordered ones
+                playlistArray = [...orderedPlaylists.filter(Boolean), ...unorderedPlaylists]
+            } catch (error) {
+                console.error('Error parsing playlist order:', error)
+                localStorage.removeItem(orderKey)
+            }
+        }
+
+        return playlistArray
     }
 
     // Delete entire playlist function
@@ -956,6 +986,36 @@ export const VideoProvider = ({ children }) => {
         return true
     }
 
+    // Reorder playlist function
+    const reorderPlaylist = (playlistId, newOrder) => {
+        console.log('🔄 Reordering playlist:', playlistId, 'to position:', newOrder)
+
+        // Get all playlists to determine the current order
+        const playlists = getPlaylistInfo()
+        const currentIndex = playlists.findIndex(p => p.id === playlistId)
+
+        if (currentIndex === -1) {
+            console.log('❌ Playlist not found:', playlistId)
+            return false
+        }
+
+        // Create a new order array with the moved playlist
+        const newPlaylistOrder = [...playlists]
+        const [movedPlaylist] = newPlaylistOrder.splice(currentIndex, 1)
+        newPlaylistOrder.splice(newOrder, 0, movedPlaylist)
+
+        // Store the new order in localStorage
+        const orderKey = getStorageKey('playlistOrder')
+        const playlistIds = newPlaylistOrder.map(p => p.id)
+        localStorage.setItem(orderKey, JSON.stringify(playlistIds))
+
+        // Force a re-render by updating videos state (this will trigger getPlaylistInfo to re-evaluate)
+        setVideos(prev => [...prev])
+
+        console.log('✅ Playlist order updated:', playlistIds)
+        return true
+    }
+
     const filteredVideos = videos.filter(video => {
         const matchesCategory = selectedCategory === 'All' || video.category === selectedCategory
         return matchesCategory
@@ -993,6 +1053,7 @@ export const VideoProvider = ({ children }) => {
         // Playlist Management
         getPlaylistInfo,
         deletePlaylist,
+        reorderPlaylist,
         // Debug function
         debugStats
     }

@@ -15,7 +15,7 @@ import {
     writeBatch
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
-import { Send, User, ArrowLeft, Smile } from 'lucide-react'
+import { Send, User, ArrowLeft, Smile, MessageCircle } from 'lucide-react'
 
 const Messages = () => {
     const { friendId } = useParams()
@@ -259,148 +259,130 @@ const Messages = () => {
 
     if (!friend) {
         return (
-            <div className="min-h-screen relative overflow-hidden bg-transparent p-6">
-                {/* Premium Fixed Black Background */}
-                <div className="fixed inset-0 z-0">
-                    {/* Pitch Black Background */}
-                    <div className="absolute inset-0 bg-black"></div>
-
-                    {/* Subtle Texture for Premium Feel */}
-                    <div className="absolute inset-0 opacity-[0.03]" style={{
-                        backgroundImage: `
-                            radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0),
-                            radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 1px, transparent 0)
-                        `,
-                        backgroundSize: '30px 30px, 50px 50px'
-                    }}></div>
-
-                    {/* Light Mode Override */}
-                    <div className="absolute inset-0 bg-white dark:bg-transparent"></div>
-                </div>
-                <div className="max-w-4xl mx-auto">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-                        <p className="text-gray-500 dark:text-gray-400">Friend not found or not in your friends list.</p>
-                        <button
-                            onClick={() => window.location.href = '/friends'}
-                            className="mt-4 inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            <ArrowLeft className="w-4 h-4" />
-                            <span>Back to Friends</span>
-                        </button>
-                    </div>
+            <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
+                    <p className="text-gray-500 dark:text-gray-400 text-center mb-4">Friend not found or not in your friends list.</p>
+                    <button
+                        onClick={() => window.location.href = '/friends'}
+                        className="w-full inline-flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Back to Friends</span>
+                    </button>
                 </div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen relative overflow-hidden bg-transparent lg:pl-64 flex flex-col">
-            {/* Premium Fixed Black Background */}
-            <div className="fixed inset-0 z-0">
-                {/* Pitch Black Background */}
-                <div className="absolute inset-0 bg-black"></div>
-
-                {/* Subtle Texture for Premium Feel */}
-                <div className="absolute inset-0 opacity-[0.03]" style={{
-                    backgroundImage: `
-                        radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.1) 1px, transparent 0),
-                        radial-gradient(circle at 25px 25px, rgba(255, 255, 255, 0.05) 1px, transparent 0)
-                    `,
-                    backgroundSize: '30px 30px, 50px 50px'
-                }}></div>
-
-                {/* Light Mode Override */}
-                <div className="absolute inset-0 bg-white dark:bg-transparent"></div>
-            </div>
-            {/* Header - Fixed below main app header */}
-            <div className="sticky top-16 z-20 p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm">
+        <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
+            {/* Header - Premium and Minimal */}
+            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 sticky top-16 z-20">
                 <div className="flex items-center space-x-3">
                     <button
                         onClick={() => window.location.href = '/friends'}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     >
                         <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </button>
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-white" />
+                    <div className="relative">
+                        {friend.photoURL ? (
+                            <img
+                                src={friend.photoURL}
+                                alt={friend.displayName}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-700"
+                            />
+                        ) : (
+                            <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
+                                <span className="text-white font-semibold text-sm">
+                                    {friend.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                </span>
+                            </div>
+                        )}
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
                     </div>
-                    <div>
-                        <h2 className="font-semibold text-gray-900 dark:text-white">{friend.displayName}</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{friend.email}</p>
+                    <div className="flex-1 min-w-0">
+                        <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">{friend.displayName}</h2>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Online</p>
                     </div>
                 </div>
             </div>
 
-            {/* Messages - Scrollable area */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 modern-scrollbar bg-white dark:bg-gray-800">
+            {/* Messages Area - Clean and Minimal */}
+            <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 pb-4">
                 {loading ? (
-                    <div className="flex justify-center items-center h-32">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <div className="flex justify-center items-center h-full">
+                        <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 dark:border-gray-600 dark:border-t-gray-400 rounded-full animate-spin"></div>
                     </div>
                 ) : messages.length === 0 ? (
-                    <div className="text-center py-12">
-                        <p className="text-gray-500 dark:text-gray-400">No messages yet. Start a conversation!</p>
+                    <div className="flex flex-col items-center justify-center h-full px-4">
+                        <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+                            <MessageCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No messages yet</h3>
+                        <p className="text-gray-500 dark:text-gray-400 text-center text-sm">Start a conversation with {friend.displayName}</p>
                     </div>
                 ) : (
-                    getMessagesWithDateSeparators(messages).map((item) => {
-                        if (item.type === 'date-separator') {
+                    <div className="px-4 space-y-3">
+                        {getMessagesWithDateSeparators(messages).map((item) => {
+                            if (item.type === 'date-separator') {
+                                return (
+                                    <div key={item.id} className="flex justify-center my-4">
+                                        <div className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full">
+                                            <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                                                {formatDateSeparator(item.timestamp)}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )
+                            }
+
                             return (
-                                <div key={item.id} className="flex justify-center my-4">
-                                    <div className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                        <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                                            {formatDateSeparator(item.timestamp)}
-                                        </span>
+                                <div
+                                    key={item.id}
+                                    className={`flex ${item.senderId === user.uid ? 'justify-end' : 'justify-start'}`}
+                                >
+                                    <div
+                                        className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg relative ${item.senderId === user.uid
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
+                                            }`}
+                                    >
+                                        <p className="text-sm">{item.message}</p>
+                                        <div className={`text-xs mt-1 flex items-center justify-between ${item.senderId === user.uid
+                                                ? 'text-blue-100'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                            }`}>
+                                            <span>{formatTime(item.timestamp)}</span>
+                                            {getMessageStatus(item) && (
+                                                <span className="ml-2 text-xs opacity-75">
+                                                    {getMessageStatus(item)}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             )
-                        }
-
-                        return (
-                            <div
-                                key={item.id}
-                                className={`flex ${item.senderId === user.uid ? 'justify-end' : 'justify-start'
-                                    }`}
-                            >
-                                <div
-                                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg relative ${item.senderId === user.uid
-                                        ? 'bg-blue-600 text-white'
-                                        : 'bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white'
-                                        }`}
-                                >
-                                    <p className="text-sm">{item.message}</p>
-                                    <div className={`text-xs mt-1 flex items-center justify-between ${item.senderId === user.uid
-                                        ? 'text-blue-100'
-                                        : 'text-gray-500 dark:text-gray-400'
-                                        }`}>
-                                        <span>{formatTime(item.timestamp)}</span>
-                                        {getMessageStatus(item) && (
-                                            <span className="ml-2 text-xs opacity-75">
-                                                {getMessageStatus(item)}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    })
+                        })}
+                        <div ref={messagesEndRef} />
+                    </div>
                 )}
-                <div ref={messagesEndRef} />
             </div>
 
-            {/* Message Input - Fixed at bottom */}
-            <div className="sticky bottom-0 z-20 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg">
+            {/* Message Input - Clean and Minimal */}
+            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
                 {/* Emoji Picker */}
                 {showEmojiPicker && (
                     <div
                         ref={emojiPickerRef}
-                        className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-h-64 overflow-y-auto modern-scrollbar"
+                        className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 max-h-48 overflow-y-auto"
                     >
-                        <div className="grid grid-cols-10 gap-2">
+                        <div className="grid grid-cols-8 gap-1">
                             {commonEmojis.map((emoji, index) => (
                                 <button
                                     key={index}
                                     onClick={() => handleEmojiSelect(emoji)}
-                                    className="text-xl hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors"
+                                    className="text-lg hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors"
                                 >
                                     {emoji}
                                 </button>
@@ -416,14 +398,14 @@ const Messages = () => {
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
                             placeholder="Type a message..."
-                            className="w-full px-4 py-2 pr-12 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+                            className="w-full px-3 py-2 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
                         />
                         <button
                             type="button"
                             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                             className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
                         >
-                            <Smile className="w-5 h-5" />
+                            <Smile className="w-4 h-4" />
                         </button>
                     </div>
                     <button

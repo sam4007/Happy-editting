@@ -470,114 +470,114 @@ const Dashboard = () => {
 
             {/* Main Dashboard Content */}
             <div className="relative z-10 p-6 lg:p-8 max-w-7xl mx-auto animate-fade-in">
-                {/* Welcome Header */}
+            {/* Welcome Header */}
                 <div className="mb-12">
                     <h1 className="text-5xl lg:text-6xl font-black text-gray-900 dark:text-white mb-4 tracking-tight leading-none">
                         Welcome back!
-                    </h1>
+                </h1>
                     <p className="text-xl text-gray-600 dark:text-gray-300 font-medium">
-                        Here's your learning progress overview
-                    </p>
-                </div>
+                    Here's your learning progress overview
+                </p>
+            </div>
 
-                {/* Course Progress Card */}
-                {allCourses.length > 0 && (
-                    <div className="mb-8">
-                        <div
-                            className="glass-card-frosted p-8 group relative overflow-hidden cursor-grab active:cursor-grabbing hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
-                            onTouchStart={onTouchStart}
-                            onTouchMove={onTouchMove}
-                            onTouchEnd={onTouchEnd}
-                        >
-                            {/* Course Navigation Header */}
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center space-x-3">
-                                    <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
-                                        <Clock className="w-5 h-5 text-white" />
-                                    </div>
+            {/* Course Progress Card */}
+            {allCourses.length > 0 && (
+                <div className="mb-8">
+                    <div
+                        className="glass-card-frosted p-8 group relative overflow-hidden cursor-grab active:cursor-grabbing hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
+                        onTouchStart={onTouchStart}
+                        onTouchMove={onTouchMove}
+                        onTouchEnd={onTouchEnd}
+                    >
+                        {/* Course Navigation Header */}
+                        <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center space-x-3">
+                                <div className="p-2 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-lg">
+                                    <Clock className="w-5 h-5 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Course Progress</h3>
+                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        {currentCourseIndex + 1} of {allCourses.length} courses • Swipe to navigate
+                                    </p>
+                                </div>
+                            </div>
+
+                            {allCourses.length > 1 && (
+                                <div className="flex space-x-2">
+                                    <button
+                                        onClick={prevCourse}
+                                        className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                                        disabled={allCourses.length <= 1}
+                                    >
+                                        <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                    </button>
+                                    <button
+                                        onClick={nextCourse}
+                                        className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+                                        disabled={allCourses.length <= 1}
+                                    >
+                                        <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {currentCourse && (
+                            <div className="space-y-6">
+                                {/* Course Info */}
+                                <div className="flex items-start justify-between">
                                     <div>
-                                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Course Progress</h3>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                                            {currentCourseIndex + 1} of {allCourses.length} courses • Swipe to navigate
-                                        </p>
+                                        <h4 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
+                                            {currentCourse.name}
+                                        </h4>
+                                        <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                                            <span>{currentCourse.instructor}</span>
+                                            <span>•</span>
+                                            <span>{currentCourse.category}</span>
+                                            <span>•</span>
+                                            <span>{currentCourse.videos.length} videos</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-2xl font-semibold text-gray-900 dark:text-white">
+                                            {courseProgress.percentage}%
+                                        </div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                                            completed
+                                        </div>
                                     </div>
                                 </div>
 
-                                {allCourses.length > 1 && (
-                                    <div className="flex space-x-2">
-                                        <button
-                                            onClick={prevCourse}
-                                            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                                            disabled={allCourses.length <= 1}
-                                        >
-                                            <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                        </button>
-                                        <button
-                                            onClick={nextCourse}
-                                            className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
-                                            disabled={allCourses.length <= 1}
-                                        >
-                                            <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                                        </button>
+                                {/* Progress Stats */}
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="text-center p-4 rounded-xl bg-black/5 dark:bg-white/5">
+                                        <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            {formatDuration(courseProgress.completedDuration)} / {formatDuration(courseProgress.totalDuration)}
+                                        </div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">Watch Time</div>
                                     </div>
-                                )}
-                            </div>
+                                    <div className="text-center p-4 rounded-xl bg-black/5 dark:bg-white/5">
+                                        <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                                            {courseProgress.completedVideos}/{courseProgress.totalVideos}
+                                        </div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">Videos Completed</div>
+                                    </div>
+                                </div>
 
-                            {currentCourse && (
-                                <div className="space-y-6">
-                                    {/* Course Info */}
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <h4 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
-                                                {currentCourse.name}
-                                            </h4>
-                                            <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
-                                                <span>{currentCourse.instructor}</span>
-                                                <span>•</span>
-                                                <span>{currentCourse.category}</span>
-                                                <span>•</span>
-                                                <span>{currentCourse.videos.length} videos</span>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-2xl font-semibold text-gray-900 dark:text-white">
-                                                {courseProgress.percentage}%
-                                            </div>
-                                            <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                completed
-                                            </div>
-                                        </div>
+                                {/* Progress Bar */}
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                                        <span>Course Progress</span>
+                                        <span>{courseProgress.percentage}%</span>
                                     </div>
-
-                                    {/* Progress Stats */}
-                                    <div className="grid grid-cols-2 gap-6">
-                                        <div className="text-center p-4 rounded-xl bg-black/5 dark:bg-white/5">
-                                            <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                                                {formatDuration(courseProgress.completedDuration)} / {formatDuration(courseProgress.totalDuration)}
-                                            </div>
-                                            <div className="text-sm text-gray-600 dark:text-gray-400">Watch Time</div>
-                                        </div>
-                                        <div className="text-center p-4 rounded-xl bg-black/5 dark:bg-white/5">
-                                            <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                                                {courseProgress.completedVideos}/{courseProgress.totalVideos}
-                                            </div>
-                                            <div className="text-sm text-gray-600 dark:text-gray-400">Videos Completed</div>
-                                        </div>
+                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-700 ease-out"
+                                            style={{ width: `${courseProgress.percentage}%` }}
+                                        />
                                     </div>
-
-                                    {/* Progress Bar */}
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
-                                            <span>Course Progress</span>
-                                            <span>{courseProgress.percentage}%</span>
-                                        </div>
-                                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full transition-all duration-700 ease-out"
-                                                style={{ width: `${courseProgress.percentage}%` }}
-                                            />
-                                        </div>
-                                    </div>
+                                </div>
 
                                     {/* Continue Learning Button */}
                                     {getNextVideoToPlay(currentCourse) && (
@@ -592,27 +592,100 @@ const Dashboard = () => {
                                         </div>
                                     )}
 
-                                    {/* Course Navigation Dots */}
-                                    {allCourses.length > 1 && (
-                                        <div className="flex justify-center space-x-2 mt-6">
-                                            {allCourses.map((_, index) => (
-                                                <button
-                                                    key={index}
-                                                    onClick={() => setCurrentCourseIndex(index)}
-                                                    className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentCourseIndex
-                                                        ? 'bg-indigo-500 w-6'
-                                                        : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
-                                                        }`}
-                                                    title={`Go to ${allCourses[index]?.name}`}
-                                                />
-                                            ))}
+                                {/* Course Navigation Dots */}
+                                {allCourses.length > 1 && (
+                                    <div className="flex justify-center space-x-2 mt-6">
+                                        {allCourses.map((_, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => setCurrentCourseIndex(index)}
+                                                className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentCourseIndex
+                                                    ? 'bg-indigo-500 w-6'
+                                                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500'
+                                                    }`}
+                                                title={`Go to ${allCourses[index]?.name}`}
+                                            />
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+                {/* Experiment Card */}
+                <div className="mb-8">
+                    <div className="relative group">
+                        {/* Deep Purple-Indigo Background Effect */}
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/20 via-indigo-600/30 to-violet-700/40 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out blur-xl scale-110 group-hover:scale-100"></div>
+
+                        {/* Animated Purple Particles */}
+                        <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700">
+                            <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-pulse group-hover:animate-bounce"></div>
+                            <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-indigo-400 rounded-full animate-pulse group-hover:animate-bounce delay-100"></div>
+                            <div className="absolute bottom-1/3 left-1/3 w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse group-hover:animate-bounce delay-200"></div>
+                            <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-purple-300 rounded-full animate-pulse group-hover:animate-bounce delay-300"></div>
+                    </div>
+
+                        {/* Main Card */}
+                        <div className="relative glass-card-frosted p-8 overflow-hidden hover:scale-[1.02] hover:shadow-2xl transition-all duration-700 ease-out group-hover:bg-white/20 dark:group-hover:bg-gray-900/30 group-hover:backdrop-blur-xl">
+                            {/* Deep Purple-Indigo Glow Overlay on Hover */}
+                            <div className="absolute inset-0 bg-gradient-to-br from-purple-100/10 via-indigo-200/5 to-violet-100/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-2xl"></div>
+
+                            {/* Content */}
+                            <div className="relative z-10">
+                                <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center space-x-3">
+                                        <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg group-hover:shadow-purple-500/50 transition-all duration-300">
+                                            <div className="w-5 h-5 text-white font-bold text-sm group-hover:animate-pulse">🧪</div>
                                         </div>
-                                    )}
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors duration-300">Experiment</h3>
+                                            <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-300">
+                                                UI Design Testing Area
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                            )}
+
+                                <div className="space-y-6">
+                                    {/* Experiment Content */}
+                                    <div className="text-center py-8">
+                                        <div className="text-4xl mb-4 group-hover:animate-pulse transition-all duration-300">🧪</div>
+                                        <h4 className="text-xl font-medium text-gray-900 dark:text-white mb-2 group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors duration-300">
+                                            UI Design Experiment
+                                        </h4>
+                                        <p className="text-gray-600 dark:text-gray-400 mb-6 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-300">
+                                            This is a temporary card for experimenting with different UI designs.
+                                        </p>
+
+                                        {/* Sample UI Elements for Testing */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                            <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-200/20 dark:border-purple-700/20 group-hover:bg-gradient-to-br group-hover:from-purple-500/20 group-hover:to-indigo-500/20 group-hover:border-purple-300/30 dark:group-hover:border-purple-600/30 transition-all duration-500">
+                                                <h5 className="font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors duration-300">Sample Element 1</h5>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-300">Test different styles here</p>
+                                            </div>
+                                            <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-200/20 dark:border-indigo-700/20 group-hover:bg-gradient-to-br group-hover:from-indigo-500/20 group-hover:to-violet-500/20 group-hover:border-indigo-300/30 dark:group-hover:border-indigo-600/30 transition-all duration-500">
+                                                <h5 className="font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors duration-300">Sample Element 2</h5>
+                                                <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-300">Experiment with colors</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex justify-center space-x-4">
+                                            <button className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg group-hover:shadow-purple-500/50">
+                                                Test Button 1
+                                            </button>
+                                            <button className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg group-hover:shadow-purple-500/50">
+                                                Test Button 2
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                )}
+                </div>
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -759,110 +832,110 @@ const Dashboard = () => {
                             <div className="text-lg font-bold text-orange-600 dark:text-orange-400">
                                 {calculateCurrentStreak()} days
                             </div>
-                        </div>
+                    </div>
+                </div>
+
+                {/* Favorites */}
+                <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                    <div className="flex items-center justify-between mb-6">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
+                            <Star className="w-5 h-5 text-yellow-500" />
+                            <span>Favorites</span>
+                        </h3>
+                        <Link
+                            to="/library?filter=favorites"
+                            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
+                        >
+                            View All
+                        </Link>
                     </div>
 
-                    {/* Favorites */}
-                    <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                        <div className="flex items-center justify-between mb-6">
-                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center space-x-2">
-                                <Star className="w-5 h-5 text-yellow-500" />
-                                <span>Favorites</span>
-                            </h3>
-                            <Link
-                                to="/library?filter=favorites"
-                                className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium transition-colors"
-                            >
-                                View All
-                            </Link>
-                        </div>
-
-                        <div className="space-y-3">
-                            {favoriteVideos.length > 0 ? (
-                                favoriteVideos.map((video) => (
+                    <div className="space-y-3">
+                        {favoriteVideos.length > 0 ? (
+                            favoriteVideos.map((video) => (
                                     <div
                                         key={video.id}
                                         onClick={() => navigate(`/video/${video.id}`)}
                                         className="flex items-center space-x-3 p-3 rounded-xl hover:bg-black/5 dark:hover:bg-white/5 transition-colors cursor-pointer group"
                                     >
-                                        <div className="w-12 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-yellow-200 group-hover:to-yellow-300 dark:group-hover:from-yellow-800/30 dark:group-hover:to-yellow-700/30 transition-all">
-                                            <Star className="w-4 h-4 text-yellow-500 transition-colors" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
-                                                {video.title}
-                                            </p>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                                                {video.instructor} • {video.duration}
-                                            </p>
-                                        </div>
-                                        <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-yellow-500 transition-colors" />
+                                    <div className="w-12 h-8 bg-gradient-to-br from-yellow-100 to-yellow-200 dark:from-yellow-900/20 dark:to-yellow-800/20 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:from-yellow-200 group-hover:to-yellow-300 dark:group-hover:from-yellow-800/30 dark:group-hover:to-yellow-700/30 transition-all">
+                                        <Star className="w-4 h-4 text-yellow-500 transition-colors" />
                                     </div>
-                                ))
-                            ) : (
-                                <div className="text-center py-8">
-                                    <Star className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        No favorites yet
-                                    </p>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-yellow-600 dark:group-hover:text-yellow-400 transition-colors">
+                                            {video.title}
+                                        </p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                            {video.instructor} • {video.duration}
+                                        </p>
+                                    </div>
+                                    <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-yellow-500 transition-colors" />
                                 </div>
-                            )}
+                            ))
+                        ) : (
+                            <div className="text-center py-8">
+                                <Star className="w-8 h-8 text-gray-400 mx-auto mb-3" />
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    No favorites yet
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div className="glass-card-frosted p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-200/50 dark:border-indigo-800/50 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                            Ready to learn something new?
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 mb-6">
+                            Discover new lectures and expand your knowledge
+                        </p>
+                        <div className="flex flex-wrap gap-3">
+                            <Link
+                                to="/library"
+                                className="btn-primary"
+                            >
+                                <BookOpen className="w-4 h-4 mr-2" />
+                                Browse Library
+                            </Link>
+                            <button
+                                onClick={() => setShowCourseImporter(true)}
+                                className="btn-secondary"
+                            >
+                                <Download className="w-4 h-4 mr-2" />
+                                Import Course
+                            </button>
+                            <button
+                                onClick={() => setShowAddModal(true)}
+                                className="btn-secondary"
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Video
+                            </button>
+                        </div>
+                    </div>
+                    <div className="hidden lg:block ml-8">
+                        <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl">
+                            <Award className="w-12 h-12 text-white" />
                         </div>
                     </div>
                 </div>
+            </div>
 
-                {/* Quick Actions */}
-                <div className="glass-card-frosted p-8 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 border-indigo-200/50 dark:border-indigo-800/50 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                    <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                                Ready to learn something new?
-                            </h3>
-                            <p className="text-gray-600 dark:text-gray-400 mb-6">
-                                Discover new lectures and expand your knowledge
-                            </p>
-                            <div className="flex flex-wrap gap-3">
-                                <Link
-                                    to="/library"
-                                    className="btn-primary"
-                                >
-                                    <BookOpen className="w-4 h-4 mr-2" />
-                                    Browse Library
-                                </Link>
-                                <button
-                                    onClick={() => setShowCourseImporter(true)}
-                                    className="btn-secondary"
-                                >
-                                    <Download className="w-4 h-4 mr-2" />
-                                    Import Course
-                                </button>
-                                <button
-                                    onClick={() => setShowAddModal(true)}
-                                    className="btn-secondary"
-                                >
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    Add Video
-                                </button>
-                            </div>
-                        </div>
-                        <div className="hidden lg:block ml-8">
-                            <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl">
-                                <Award className="w-12 h-12 text-white" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            {/* Modals */}
+            <AddVideoModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+            />
 
-                {/* Modals */}
-                <AddVideoModal
-                    isOpen={showAddModal}
-                    onClose={() => setShowAddModal(false)}
-                />
-
-                <CourseImporter
-                    isOpen={showCourseImporter}
-                    onClose={() => setShowCourseImporter(false)}
-                />
+            <CourseImporter
+                isOpen={showCourseImporter}
+                onClose={() => setShowCourseImporter(false)}
+            />
 
                 {/* Weekly Goal Setting Modal */}
                 {showGoalModal && (

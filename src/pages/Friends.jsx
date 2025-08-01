@@ -9,7 +9,9 @@ import {
     getDocs,
     onSnapshot,
     doc,
-    getDoc
+    getDoc,
+    updateDoc,
+    serverTimestamp
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
 import {
@@ -53,6 +55,7 @@ const Friends = () => {
     const [message, setMessage] = useState('')
     const [conversations, setConversations] = useState([])
     const [loadingConversations, setLoadingConversations] = useState(false)
+    const [unreadConversations, setUnreadConversations] = useState(0)
 
     // Friend details modal state
     const [selectedFriend, setSelectedFriend] = useState(null)
@@ -63,12 +66,40 @@ const Friends = () => {
     const [loadingFriendsFriends, setLoadingFriendsFriends] = useState(false)
     const [currentConversation, setCurrentConversation] = useState(null)
 
-    // Load conversations when Messages tab is active
+    // Load conversations when Messages tab is active or when user changes
     useEffect(() => {
-        if (activeTab === 'messages' && user) {
+        if (user && friends.length > 0) {
             loadConversations()
         }
-    }, [activeTab, user])
+    }, [user, friends])
+
+    // Real-time listener for conversations to update unread count
+    useEffect(() => {
+        if (!user) return
+
+        const messagesRef = collection(db, 'messages')
+        const q1 = query(messagesRef, where('senderId', '==', user.uid))
+        const q2 = query(messagesRef, where('receiverId', '==', user.uid))
+
+        const unsubscribe1 = onSnapshot(q1, (snapshot) => {
+            console.log('📱 Real-time update - sent messages changed')
+            if (friends.length > 0) {
+                loadConversations()
+            }
+        })
+
+        const unsubscribe2 = onSnapshot(q2, (snapshot) => {
+            console.log('📱 Real-time update - received messages changed')
+            if (friends.length > 0) {
+                loadConversations()
+            }
+        })
+
+        return () => {
+            unsubscribe1()
+            unsubscribe2()
+        }
+    }, [user, friends])
 
     // Load friend details when a friend is selected
     useEffect(() => {
@@ -78,51 +109,8 @@ const Friends = () => {
         }
     }, [selectedFriend])
 
-    // Load real-time friend data
-    useEffect(() => {
-        const loadRealTimeFriendData = async () => {
-            if (!user || friends.length === 0) return
-
-            try {
-                const updatedFriends = await Promise.all(
-                    friends.map(async (friend) => {
-                        try {
-                            const friendRef = doc(db, 'users', friend.id)
-                            const friendSnap = await getDoc(friendRef)
-
-                            if (friendSnap.exists()) {
-                                const friendData = friendSnap.data()
-                                const friendStats = friendData.stats || {}
-
-                                return {
-                                    ...friend,
-                                    stats: {
-                                        totalCourses: friendStats.totalCourses || 0,
-                                        completedCourses: friendStats.completedCourses || 0,
-                                        totalWatchTime: friendStats.totalWatchTime || 0,
-                                        studyHours: friendStats.studyHours || 0,
-                                        completionRate: friendStats.completionRate || 0
-                                    }
-                                }
-                            }
-                            return friend
-                        } catch (error) {
-                            console.error('Error loading friend data:', error)
-                            return friend
-                        }
-                    })
-                )
-
-                // Update friends with real-time data
-                // Note: This would require updating the friends state in the context
-                console.log('Real-time friend data loaded:', updatedFriends)
-            } catch (error) {
-                console.error('Error loading real-time friend data:', error)
-            }
-        }
-
-        loadRealTimeFriendData()
-    }, [user, friends])
+    // Friends data is already loaded in real-time by the FriendsContext
+    // No need for additional loading here as the context handles it
 
     const loadFriendDetails = async (friend) => {
         setLoadingFriendDetails(true)
@@ -333,6 +321,7 @@ const Friends = () => {
 
             // Convert to array and get friend details for each conversation
             const conversationList = []
+            console.log('📱 Available friends:', friends.length)
             for (const [chatId, latestMessage] of conversationMap) {
                 const otherUserId = latestMessage.senderId === user.uid ? latestMessage.receiverId : latestMessage.senderId
                 const friend = friends.find(f => f.id === otherUserId)
@@ -344,6 +333,8 @@ const Friends = () => {
                         latestMessage,
                         otherUserId
                     })
+                } else {
+                    console.log('📱 Friend not found for user:', otherUserId)
                 }
             }
 
@@ -353,7 +344,20 @@ const Friends = () => {
                 return b.latestMessage.timestamp.toMillis() - a.latestMessage.timestamp.toMillis()
             })
 
+            // Count conversations with unread messages
+            let unreadCount = 0
+            conversationList.forEach(conversation => {
+                const isUnread = conversation.latestMessage.senderId !== user.uid &&
+                    conversation.latestMessage.status === 'sent'
+                if (isUnread) {
+                    unreadCount++
+                }
+            })
+
+            console.log('📱 Loaded conversations:', conversationList.length)
+            console.log('📱 Unread count:', unreadCount)
             setConversations(conversationList)
+            setUnreadConversations(unreadCount)
         } catch (error) {
             console.error('Error loading conversations:', error)
         } finally {
@@ -605,9 +609,19 @@ const Friends = () => {
                             {searchResults.map(user => (
                                 <div key={user.id} className="glass-card-frosted flex items-center justify-between p-4 rounded-xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
                                     <div className="flex items-center space-x-3">
-                                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
-                                            <User className="w-6 h-6 text-white" />
-                                        </div>
+                                        {user.photoURL ? (
+                                            <img
+                                                src={user.photoURL}
+                                                alt={user.displayName || user.email}
+                                                className="w-12 h-12 rounded-full object-cover border-2 border-white/20 dark:border-gray-700/50"
+                                            />
+                                        ) : (
+                                            <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                <span className="text-white font-semibold text-lg">
+                                                    {(user.displayName || user.email)?.charAt(0)?.toUpperCase() || 'U'}
+                                                </span>
+                                            </div>
+                                        )}
                                         <div>
                                             <p className="font-medium text-gray-900 dark:text-white">
                                                 {user.displayName || user.email}
@@ -667,36 +681,58 @@ const Friends = () => {
 
                 {/* Tabs */}
                 <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                    <div className="flex space-x-1 mb-6 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl">
+                    <div className="flex space-x-1 mb-6 p-1 bg-gradient-to-r from-gray-50/50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/50 backdrop-blur-sm rounded-xl border border-white/20 dark:border-gray-700/30 shadow-lg">
                         <button
                             onClick={() => setActiveTab('friends')}
-                            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'friends'
-                                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            className={`flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-300 relative overflow-hidden group ${activeTab === 'friends'
+                                ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25 transform scale-105'
+                                : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-700/60'
                                 }`}
                         >
-                            <Users className="w-4 h-4" />
+                            <div className={`transition-all duration-300 ${activeTab === 'friends' ? 'text-white' : 'text-indigo-500 group-hover:text-indigo-600'}`}>
+                                <Users className="w-4 h-4" />
+                            </div>
                             <span>Friends ({friends.length})</span>
+                            {activeTab === 'friends' && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-600/20 animate-pulse"></div>
+                            )}
                         </button>
                         <button
                             onClick={() => setActiveTab('requests')}
-                            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'requests'
-                                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            className={`flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-300 relative overflow-hidden group ${activeTab === 'requests'
+                                ? 'bg-gradient-to-r from-orange-500 to-red-600 text-white shadow-lg shadow-orange-500/25 transform scale-105'
+                                : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-700/60'
                                 }`}
                         >
-                            <Mail className="w-4 h-4" />
+                            <div className={`transition-all duration-300 ${activeTab === 'requests' ? 'text-white' : 'text-orange-500 group-hover:text-orange-600'}`}>
+                                <Mail className="w-4 h-4" />
+                            </div>
                             <span>Requests ({friendRequests.length})</span>
+                            {activeTab === 'requests' && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-red-600/20 animate-pulse"></div>
+                            )}
                         </button>
                         <button
                             onClick={() => setActiveTab('messages')}
-                            className={`flex-1 flex items-center justify-center space-x-2 py-3 px-4 rounded-lg font-medium text-sm transition-all ${activeTab === 'messages'
-                                ? 'bg-white dark:bg-gray-700 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300'
+                            className={`flex-1 flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg font-medium text-sm transition-all duration-300 relative overflow-hidden group ${activeTab === 'messages'
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 transform scale-105'
+                                : 'text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white hover:bg-white/60 dark:hover:bg-gray-700/60'
                                 }`}
                         >
-                            <MessageCircle className="w-4 h-4" />
-                            <span>Messages ({conversations.length})</span>
+                            <div className={`transition-all duration-300 ${activeTab === 'messages' ? 'text-white' : 'text-emerald-500 group-hover:text-emerald-600'}`}>
+                                <MessageCircle className="w-4 h-4" />
+                            </div>
+                            <span className="relative">
+                                Messages
+                                {unreadConversations > 0 && (
+                                    <div className="absolute -top-1 -right-6 w-4 h-4 bg-gradient-to-r from-red-500 to-pink-600 text-white text-xs rounded-full flex items-center justify-center font-bold animate-pulse shadow-lg shadow-red-500/50 z-[9999]">
+                                        {unreadConversations}
+                                    </div>
+                                )}
+                            </span>
+                            {activeTab === 'messages' && (
+                                <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-teal-600/20 animate-pulse"></div>
+                            )}
                         </button>
                     </div>
 
@@ -735,9 +771,19 @@ const Friends = () => {
 
                                             {/* Header with Avatar */}
                                             <div className="flex items-center space-x-3 mb-4 pr-10">
-                                                <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                                                    <User className="w-6 h-6 text-white" />
-                                                </div>
+                                                {friend.photoURL ? (
+                                                    <img
+                                                        src={friend.photoURL}
+                                                        alt={friend.displayName}
+                                                        className="w-12 h-12 rounded-xl object-cover shadow-lg border-2 border-white/20 dark:border-gray-700/50"
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                                        <span className="text-white font-semibold text-lg">
+                                                            {friend.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                                        </span>
+                                                    </div>
+                                                )}
                                                 <div className="flex-1 min-w-0">
                                                     <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors truncate">
                                                         {friend.displayName}
@@ -783,46 +829,86 @@ const Friends = () => {
                     )}
 
                     {activeTab === 'requests' && (
-                        <div>
-                            {friendRequests.length === 0 ? (
-                                <div className="text-center py-16">
-                                    <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-cyan-100 dark:from-blue-900/20 dark:to-cyan-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Mail className="w-10 h-10 text-blue-500" />
+                        <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center space-x-3">
+                                    <div className="p-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl">
+                                        <Mail className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                                     </div>
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No friend requests</h3>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Friend Requests</h3>
+                                </div>
+                                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full">
+                                    {friendRequests.length} pending
+                                </span>
+                            </div>
+
+                            {friendRequests.length === 0 ? (
+                                <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <Mail className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                                    </div>
+                                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Friend Requests</h4>
                                     <p className="text-gray-500 dark:text-gray-400">You're all caught up!</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
                                     {friendRequests.map(request => (
-                                        <div key={request.id} className="p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all">
-                                            <div className="flex items-center justify-between">
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-full flex items-center justify-center">
-                                                        <User className="w-7 h-7 text-white" />
+                                        <div key={request.id} className="glass-card-frosted p-4 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                                            <div className="flex items-center space-x-4">
+                                                {/* Profile Picture */}
+                                                {request.photoURL ? (
+                                                    <div className="relative">
+                                                        <img
+                                                            src={request.photoURL}
+                                                            alt={request.displayName || request.fromName}
+                                                            className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-lg"
+                                                        />
+                                                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
+                                                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                                        </div>
                                                     </div>
-                                                    <div>
-                                                        <h3 className="font-semibold text-gray-900 dark:text-white">{request.fromName}</h3>
-                                                        <p className="text-sm text-gray-500 dark:text-gray-400">{request.fromEmail}</p>
-                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                                                            Wants to connect with you
-                                                        </p>
+                                                ) : (
+                                                    <div className="relative">
+                                                        <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center shadow-lg">
+                                                            <span className="text-white font-semibold text-lg">
+                                                                {(request.displayName || request.fromName)?.charAt(0)?.toUpperCase() || 'U'}
+                                                            </span>
+                                                        </div>
+                                                        <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white dark:border-gray-800 flex items-center justify-center">
+                                                            <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                                                        {request.displayName || request.fromName}
+                                                    </h4>
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate mt-1">
+                                                        {request.email || request.fromEmail}
+                                                    </p>
+                                                    <div className="flex items-center space-x-2 mt-2">
+                                                        <div className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                            Wants to connect
+                                                        </span>
                                                     </div>
                                                 </div>
-                                                <div className="flex space-x-3">
+
+                                                <div className="flex space-x-2">
                                                     <button
                                                         onClick={() => handleAcceptRequest(request.id, request.from)}
-                                                        className="btn-primary text-sm"
+                                                        className="w-full btn-primary text-sm py-2.5 rounded-xl hover:scale-[1.02] transition-transform flex items-center justify-center space-x-2"
                                                     >
-                                                        <Check className="w-4 h-4 mr-1" />
-                                                        Accept
+                                                        <Check className="w-4 h-4" />
+                                                        <span>Accept</span>
                                                     </button>
                                                     <button
                                                         onClick={() => handleRejectRequest(request.id)}
-                                                        className="btn-secondary text-sm"
+                                                        className="w-full btn-secondary text-sm py-2.5 rounded-xl hover:scale-[1.02] transition-transform flex items-center justify-center space-x-2"
                                                     >
-                                                        <X className="w-4 h-4 mr-1" />
-                                                        Decline
+                                                        <X className="w-4 h-4" />
+                                                        <span>Decline</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -834,55 +920,101 @@ const Friends = () => {
                     )}
 
                     {activeTab === 'messages' && (
-                        <div>
+                        <div className="glass-card-frosted p-6 hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center space-x-3">
+                                    <div className="p-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-xl">
+                                        <MessageCircle className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                                    </div>
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white">Messages</h3>
+                                </div>
+                                <span className="px-3 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-sm font-medium rounded-full">
+                                    {conversations.length} conversations
+                                </span>
+                            </div>
+
                             {loadingConversations ? (
-                                <div className="flex justify-center items-center py-16">
-                                    <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                                <div className="flex justify-center items-center py-12">
+                                    <div className="w-12 h-12 border-4 border-gray-200 border-t-gray-600 dark:border-gray-700 dark:border-t-gray-400 rounded-full animate-spin"></div>
                                 </div>
                             ) : conversations.length === 0 ? (
-                                <div className="text-center py-16">
-                                    <div className="w-20 h-20 bg-gradient-to-br from-purple-100 to-pink-100 dark:from-purple-900/20 dark:to-pink-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <MessageCircle className="w-10 h-10 text-purple-500" />
+                                <div className="text-center py-12">
+                                    <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <MessageCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                                     </div>
-                                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No conversations yet</h3>
+                                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No conversations yet</h4>
                                     <p className="text-gray-500 dark:text-gray-400 mb-4">Start messaging your friends!</p>
                                     <button
                                         onClick={() => setActiveTab('friends')}
-                                        className="btn-primary"
+                                        className="btn-primary text-sm py-2.5 rounded-xl hover:scale-[1.02] transition-transform"
                                     >
                                         View Friends
                                     </button>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
+                                <div className="space-y-4">
                                     {conversations.map(conversation => (
                                         <div
                                             key={conversation.chatId}
-                                            className="group p-6 rounded-xl bg-white/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 hover:bg-white/80 dark:hover:bg-gray-800/80 hover:shadow-lg transition-all cursor-pointer"
-                                            onClick={() => window.location.href = `/messages/${conversation.friend.id}`}
+                                            className="glass-card-frosted p-4 hover:scale-[1.02] hover:shadow-lg transition-all duration-300 cursor-pointer"
+                                            onClick={async () => {
+                                                // Mark messages as read when clicking on conversation
+                                                if (conversation.latestMessage.senderId !== user.uid &&
+                                                    conversation.latestMessage.status === 'sent') {
+                                                    try {
+                                                        const messageRef = doc(db, 'messages', conversation.latestMessage.id)
+                                                        await updateDoc(messageRef, {
+                                                            status: 'seen',
+                                                            seenAt: serverTimestamp()
+                                                        })
+                                                    } catch (error) {
+                                                        console.error('Error marking message as read:', error)
+                                                    }
+                                                }
+                                                window.location.href = `/messages/${conversation.friend.id}`
+                                            }}
                                         >
                                             <div className="flex items-center space-x-4">
                                                 <div className="relative">
-                                                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center">
-                                                        <User className="w-7 h-7 text-white" />
+                                                    {conversation.friend.photoURL ? (
+                                                        <img
+                                                            src={conversation.friend.photoURL}
+                                                            alt={conversation.friend.displayName}
+                                                            className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-gray-700 shadow-lg"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-gray-600 rounded-full flex items-center justify-center shadow-lg">
+                                                            <span className="text-white font-semibold text-lg">
+                                                                {conversation.friend.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full flex items-center justify-center">
+                                                        <div className="w-1.5 h-1.5 bg-white rounded-full"></div>
                                                     </div>
-                                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
                                                 </div>
+
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between mb-1">
-                                                        <h3 className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                                        <h4 className="text-base font-semibold text-gray-900 dark:text-white truncate">
                                                             {conversation.friend.displayName}
-                                                        </h3>
-                                                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                            {formatTime(conversation.latestMessage.timestamp)}
-                                                        </span>
+                                                        </h4>
+                                                        <div className="flex items-center space-x-2">
+                                                            {conversation.latestMessage.senderId !== user.uid && conversation.latestMessage.status === 'sent' && (
+                                                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                                            )}
+                                                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                                {formatTime(conversation.latestMessage.timestamp)}
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                                                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                                         {conversation.latestMessage.senderId === user.uid ? 'You: ' : ''}
                                                         {conversation.latestMessage.message}
                                                     </p>
                                                 </div>
-                                                <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-purple-500 transition-colors" />
+
+                                                <MessageCircle className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                                             </div>
                                         </div>
                                     ))}
@@ -896,93 +1028,116 @@ const Friends = () => {
             {/* Friend Details Modal */}
             {showFriendModal && selectedFriend && (
                 <div
-                    className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                     onClick={closeFriendModal}
                 >
                     <div
-                        className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+                        className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div className="p-6 border-b border-white/10 dark:border-gray-700/30">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                        <User className="w-8 h-8 text-white" />
-                                    </div>
-                                    <div>
-                                        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+                                    {selectedFriend.photoURL ? (
+                                        <img
+                                            src={selectedFriend.photoURL}
+                                            alt={selectedFriend.displayName}
+                                            className="w-14 h-14 rounded-2xl object-cover shadow-lg border-2 border-white/20 dark:border-gray-700/50"
+                                        />
+                                    ) : (
+                                        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+                                            <span className="text-white font-bold text-xl">
+                                                {selectedFriend.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                            </span>
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">
                                             {selectedFriend.displayName}
                                         </h2>
-                                        <p className="text-gray-600 dark:text-gray-400">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
                                             {selectedFriend.email}
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={closeFriendModal}
-                                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                    className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition-colors"
                                 >
-                                    <X className="w-6 h-6" />
+                                    <X className="w-5 h-5 text-gray-500" />
                                 </button>
                             </div>
                         </div>
 
                         {/* Content */}
-                        <div className="p-6">
+                        <div className="p-6 space-y-6">
                             {loadingFriendDetails ? (
-                                <div className="flex justify-center items-center py-12">
-                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-                                    <span className="ml-3 text-gray-600 dark:text-gray-400">Loading friend's progress...</span>
+                                <div className="flex justify-center items-center py-8">
+                                    <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                                    <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Loading progress...</span>
                                 </div>
                             ) : friendDetails ? (
-                                <div className="space-y-6">
+                                <>
                                     {/* Progress Stats */}
-                                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-700 dark:to-gray-600 rounded-xl p-6">
-                                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                            <TrendingUp className="w-6 h-6 mr-2 text-blue-500" />
-                                            Learning Progress
-                                        </h3>
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                            <div className="text-center">
-                                                <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <BookOpen className="w-6 h-6 text-white" />
-                                                </div>
-                                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{friendDetails.stats.totalCourses}</p>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">Total Courses</p>
+                                    <div className="glass-card-frosted p-5 rounded-2xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                                        <div className="flex items-center space-x-2 mb-4">
+                                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl">
+                                                <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                                             </div>
-                                            <div className="text-center">
-                                                <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <CheckCircle className="w-6 h-6 text-white" />
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Learning Progress</h3>
+                                        </div>
+
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center">
+                                                        <BookOpen className="w-3 h-3 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{friendDetails.stats.totalCourses}</p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Courses</p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{friendDetails.stats.completedCourses}</p>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <Clock className="w-6 h-6 text-white" />
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
+                                                        <CheckCircle className="w-3 h-3 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{friendDetails.stats.completedCourses}</p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Completed</p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{friendDetails.stats.studyHours}h</p>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">Study Hours</p>
-                                            </div>
-                                            <div className="text-center">
-                                                <div className="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2">
-                                                    <Award className="w-6 h-6 text-white" />
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center">
+                                                        <Clock className="w-3 h-3 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{friendDetails.stats.studyHours}h</p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Study Time</p>
+                                                    </div>
                                                 </div>
-                                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</p>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400">Completion Rate</p>
+                                                <div className="flex items-center space-x-2">
+                                                    <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center">
+                                                        <Award className="w-3 h-3 text-white" />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</p>
+                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Completion</p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
-                                        {/* Overall Completion Rate */}
-                                        <div className="mt-6">
+                                        {/* Progress Bar */}
+                                        <div className="mt-4">
                                             <div className="flex items-center justify-between mb-2">
-                                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Overall Completion</span>
-                                                <span className="text-sm font-medium text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</span>
+                                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Overall Progress</span>
+                                                <span className="text-xs font-medium text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</span>
                                             </div>
-                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+                                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                                                 <div
-                                                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-3 rounded-full transition-all duration-300"
+                                                    className="bg-gradient-to-r from-indigo-500 to-purple-600 h-2 rounded-full transition-all duration-300"
                                                     style={{ width: `${friendDetails.stats.averageCompletion}%` }}
                                                 ></div>
                                             </div>
@@ -990,59 +1145,71 @@ const Friends = () => {
                                     </div>
 
                                     {/* Friends Section */}
-                                    <div className="bg-white dark:bg-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
-                                        <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                                            <Users className="w-6 h-6 mr-2 text-green-500" />
-                                            Friends ({selectedFriendsFriends.length})
-                                        </h3>
+                                    <div className="glass-card-frosted p-5 rounded-2xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                                        <div className="flex items-center space-x-2 mb-4">
+                                            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl">
+                                                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                            </div>
+                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Friends ({selectedFriendsFriends.length})</h3>
+                                        </div>
 
                                         {loadingFriendsFriends ? (
-                                            <div className="flex justify-center items-center py-8">
-                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                                                <span className="ml-3 text-gray-600 dark:text-gray-400">Loading friends...</span>
+                                            <div className="flex justify-center items-center py-6">
+                                                <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                                                <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Loading...</span>
                                             </div>
                                         ) : selectedFriendsFriends.length > 0 ? (
-                                            <div className="space-y-3 max-h-80 overflow-y-auto friends-modal-scrollbar">
+                                            <div className="space-y-2 max-h-48 overflow-y-auto">
                                                 {selectedFriendsFriends.map(friend => {
                                                     const status = getFriendshipStatus(friend.id)
                                                     return (
-                                                        <div key={friend.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-500 transition-colors">
+                                                        <div key={friend.id} className="flex items-center justify-between p-3 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-200">
                                                             <div className="flex items-center space-x-3">
-                                                                <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                                                                    <User className="w-5 h-5 text-white" />
-                                                                </div>
-                                                                <div>
-                                                                    <p className="font-medium text-gray-900 dark:text-white">{friend.displayName}</p>
-                                                                    <p className="text-sm text-gray-500 dark:text-gray-400">{friend.email}</p>
+                                                                {friend.photoURL ? (
+                                                                    <img
+                                                                        src={friend.photoURL}
+                                                                        alt={friend.displayName}
+                                                                        className="w-8 h-8 rounded-lg object-cover border-2 border-white/20 dark:border-gray-700/50"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
+                                                                        <span className="text-white font-semibold text-sm">
+                                                                            {friend.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                                                        </span>
+                                                                    </div>
+                                                                )}
+                                                                <div className="flex-1 min-w-0">
+                                                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{friend.displayName}</p>
+                                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{friend.email}</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex items-center space-x-2">
+                                                            <div className="flex-shrink-0">
                                                                 {status === 'self' ? (
-                                                                    <span className="px-3 py-1 text-xs bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-400 rounded-full">
+                                                                    <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg">
                                                                         You
                                                                     </span>
                                                                 ) : status === 'friends' ? (
                                                                     <button
                                                                         onClick={() => handleFollowUser(friend.id)}
-                                                                        className="flex items-center space-x-1 px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm transition-colors"
+                                                                        className="flex items-center space-x-1 px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 text-xs transition-colors"
                                                                     >
-                                                                        <UserMinus className="w-4 h-4" />
+                                                                        <UserMinus className="w-3 h-3" />
                                                                         <span>Unfollow</span>
                                                                     </button>
                                                                 ) : status === 'pending' ? (
-                                                                    <span className="px-3 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-full">
+                                                                    <span className="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-lg">
                                                                         Pending
                                                                     </span>
                                                                 ) : status === 'received' ? (
-                                                                    <span className="px-3 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full">
+                                                                    <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
                                                                         Requests you
                                                                     </span>
                                                                 ) : (
                                                                     <button
                                                                         onClick={() => handleFollowUser(friend.id)}
-                                                                        className="flex items-center space-x-1 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm transition-colors"
+                                                                        className="flex items-center space-x-1 px-2 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-xs transition-colors"
                                                                     >
-                                                                        <UserPlus className="w-4 h-4" />
+                                                                        <UserPlus className="w-3 h-3" />
                                                                         <span>Follow</span>
                                                                     </button>
                                                                 )}
@@ -1052,35 +1219,34 @@ const Friends = () => {
                                                 })}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-8">
-                                                <Users className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                                                <p className="text-gray-500 dark:text-gray-400">This user has no friends yet.</p>
+                                            <div className="text-center py-6">
+                                                <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">No friends yet</p>
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                </>
                             ) : (
-                                <div className="text-center py-12">
-                                    <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                                    <p className="text-gray-500 dark:text-gray-400 text-lg">Unable to load friend's data</p>
-                                    <p className="text-gray-400 dark:text-gray-500 text-sm mt-2">Please try again later.</p>
+                                <div className="text-center py-8">
+                                    <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                                    <p className="text-sm text-gray-500 dark:text-gray-400">Unable to load data</p>
                                 </div>
                             )}
                         </div>
 
                         {/* Footer */}
-                        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 rounded-b-xl">
+                        <div className="px-6 py-4 border-t border-white/10 dark:border-gray-700/30 bg-gray-50/50 dark:bg-gray-800/50">
                             <div className="flex justify-end space-x-3">
                                 <button
                                     onClick={() => window.location.href = `/messages/${selectedFriend.id}`}
-                                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
                                 >
                                     <MessageCircle className="w-4 h-4" />
-                                    <span>Send Message</span>
+                                    <span>Message</span>
                                 </button>
                                 <button
                                     onClick={closeFriendModal}
-                                    className="px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 text-sm font-medium"
                                 >
                                     Close
                                 </button>

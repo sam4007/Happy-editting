@@ -42,7 +42,7 @@ const formatVideoTitle = (title) => {
 };
 
 const Library = () => {
-    const { filteredVideos, categories, selectedCategory, setSelectedCategory, videos, updateVideo, favorites, watchHistory } = useVideo()
+    const { filteredVideos, categories, selectedCategory, setSelectedCategory, videos, updateVideo, favorites, watchHistory, getPlaylistInfo } = useVideo()
     const navigate = useNavigate()
     const location = useLocation()
     const [sortBy, setSortBy] = useState('recent')
@@ -69,6 +69,8 @@ const Library = () => {
             setActiveFilter(null)
         }
     }, [location.search])
+
+
 
     // Clear filter function
     const clearFilter = () => {
@@ -200,7 +202,35 @@ const Library = () => {
         return sortOrder === 'asc' ? comparison : -comparison
     })
 
-    const groupedVideos = groupVideosByPlaylist(sortedVideos)
+    // Get ordered playlists and their videos
+    const orderedPlaylists = getPlaylistInfo()
+    const playlistVideosMap = {}
+
+    // Create a map of playlist titles to their videos using the same logic as getPlaylistInfo()
+    sortedVideos.forEach(video => {
+        const playlistKey = video.playlistTitle || `${video.instructor} - ${video.category}`
+        if (!playlistVideosMap[playlistKey]) {
+            playlistVideosMap[playlistKey] = []
+        }
+        playlistVideosMap[playlistKey].push(video)
+    })
+
+    // Create ordered grouped videos based on playlist order
+    const groupedVideos = {}
+    orderedPlaylists.forEach(playlist => {
+        const playlistTitle = playlist.title
+        if (playlistVideosMap[playlistTitle]) {
+            groupedVideos[playlistTitle] = playlistVideosMap[playlistTitle]
+        }
+    })
+
+    // Add any remaining videos that don't match playlist titles
+    sortedVideos.forEach(video => {
+        const playlistKey = video.playlistTitle || `${video.instructor} - ${video.category}`
+        if (!groupedVideos[playlistKey]) {
+            groupedVideos[playlistKey] = [video]
+        }
+    })
 
     return (
         <div className="min-h-screen relative overflow-hidden bg-transparent">
@@ -275,6 +305,13 @@ const Library = () => {
                         {/* Action Buttons */}
                         {!activeFilter && (
                             <div className="flex flex-wrap gap-3">
+                                <button
+                                    onClick={() => setShowPlaylistManager(true)}
+                                    className="btn-secondary flex items-center space-x-2 hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
+                                >
+                                    <FolderOpen className="w-4 h-4 text-indigo-500" />
+                                    <span>Manage Playlists</span>
+                                </button>
                                 <button
                                     onClick={() => setShowPlaylistImporter(true)}
                                     className="btn-secondary flex items-center space-x-2 hover:scale-[1.02] hover:shadow-lg transition-all duration-300"
