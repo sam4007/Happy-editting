@@ -23,12 +23,24 @@ const Messages = () => {
     const { friends } = useFriends()
     const [messages, setMessages] = useState([])
     const [newMessage, setNewMessage] = useState('')
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false) // Start with false for faster initial render
+    const [friendData, setFriendData] = useState(null)
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
     const messagesEndRef = useRef(null)
     const emojiPickerRef = useRef(null)
 
-    const friend = friends.find(f => f.id === friendId)
+    // Optimize friend finding - use memoization and early return
+    const friend = React.useMemo(() => {
+        if (!friends || friends.length === 0) return null
+        return friends.find(f => f.id === friendId)
+    }, [friends, friendId])
+
+    // Set friend data immediately when found
+    React.useEffect(() => {
+        if (friend) {
+            setFriendData(friend)
+        }
+    }, [friend])
 
     // Common emojis for the picker
     const commonEmojis = [
@@ -257,9 +269,30 @@ const Messages = () => {
         return messagesWithSeparators
     }
 
-    if (!friend) {
+    // Show loading only if friends are still loading and we don't have friend data yet
+    if (!friendData && (!friends || friends.length === 0)) {
         return (
-            <div className="h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+            <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+                {/* Modern Minimal Loading */}
+                <div className="flex flex-col items-center space-y-8">
+                    {/* Clean Spinner */}
+                    <div className="relative">
+                        <div className="w-12 h-12 border-2 border-gray-200 dark:border-gray-700 border-t-blue-600 rounded-full animate-spin"></div>
+                    </div>
+
+                    {/* Simple Text */}
+                    <div className="text-center">
+                        <h3 className="text-base font-medium text-gray-700 dark:text-gray-300">Loading conversation...</h3>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    // Show error if friends loaded but friend not found
+    if (friends && friends.length > 0 && !friendData) {
+        return (
+            <div className="h-full flex items-center justify-center bg-gray-50 dark:bg-gray-900">
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
                     <p className="text-gray-500 dark:text-gray-400 text-center mb-4">Friend not found or not in your friends list.</p>
                     <button
@@ -275,9 +308,9 @@ const Messages = () => {
     }
 
     return (
-        <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
-            {/* Header - Premium and Minimal */}
-            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 sticky top-16 z-20">
+        <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-900">
+            {/* Header - Premium and Minimal - Fixed to Viewport Top */}
+            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 fixed top-14 left-0 right-0 lg:left-64 z-50">
                 <div className="flex items-center space-x-3">
                     <button
                         onClick={() => window.location.href = '/friends'}
@@ -286,30 +319,30 @@ const Messages = () => {
                         <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </button>
                     <div className="relative">
-                        {friend.photoURL ? (
+                        {friendData.photoURL ? (
                             <img
-                                src={friend.photoURL}
-                                alt={friend.displayName}
+                                src={friendData.photoURL}
+                                alt={friendData.displayName}
                                 className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-700"
                             />
                         ) : (
                             <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center">
                                 <span className="text-white font-semibold text-sm">
-                                    {friend.displayName?.charAt(0)?.toUpperCase() || 'U'}
+                                    {friendData.displayName?.charAt(0)?.toUpperCase() || 'U'}
                                 </span>
                             </div>
                         )}
                         <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">{friend.displayName}</h2>
+                        <h2 className="text-base font-semibold text-gray-900 dark:text-white truncate">{friendData.displayName}</h2>
                         <p className="text-xs text-gray-500 dark:text-gray-400 truncate">Online</p>
                     </div>
                 </div>
             </div>
 
             {/* Messages Area - Clean and Minimal */}
-            <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 pb-4">
+            <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 pt-16 pb-20">
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
                         <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 dark:border-gray-600 dark:border-t-gray-400 rounded-full animate-spin"></div>
@@ -320,7 +353,7 @@ const Messages = () => {
                             <MessageCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No messages yet</h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-center text-sm">Start a conversation with {friend.displayName}</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-center text-sm">Start a conversation with {friendData.displayName}</p>
                     </div>
                 ) : (
                     <div className="px-4 space-y-3">
@@ -344,14 +377,14 @@ const Messages = () => {
                                 >
                                     <div
                                         className={`max-w-xs lg:max-w-md px-3 py-2 rounded-lg relative ${item.senderId === user.uid
-                                                ? 'bg-blue-600 text-white'
-                                                : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
+                                            ? 'bg-blue-600 text-white'
+                                            : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
                                             }`}
                                     >
                                         <p className="text-sm">{item.message}</p>
                                         <div className={`text-xs mt-1 flex items-center justify-between ${item.senderId === user.uid
-                                                ? 'text-blue-100'
-                                                : 'text-gray-500 dark:text-gray-400'
+                                            ? 'text-blue-100'
+                                            : 'text-gray-500 dark:text-gray-400'
                                             }`}>
                                             <span>{formatTime(item.timestamp)}</span>
                                             {getMessageStatus(item) && (
@@ -369,13 +402,13 @@ const Messages = () => {
                 )}
             </div>
 
-            {/* Message Input - Clean and Minimal */}
-            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+            {/* Message Input - Clean and Minimal - Fixed to Viewport Bottom */}
+            <div className="flex-shrink-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 fixed bottom-0 left-0 right-0 lg:left-64 z-50">
                 {/* Emoji Picker */}
                 {showEmojiPicker && (
                     <div
                         ref={emojiPickerRef}
-                        className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 max-h-48 overflow-y-auto"
+                        className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3 max-h-48 overflow-y-auto z-10"
                     >
                         <div className="grid grid-cols-8 gap-1">
                             {commonEmojis.map((emoji, index) => (
