@@ -1032,105 +1032,104 @@ const Friends = () => {
                     onClick={closeFriendModal}
                 >
                     <div
-                        className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] overflow-hidden"
+                        className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 rounded-3xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden"
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Header */}
-                        <div className="p-6 border-b border-white/10 dark:border-gray-700/30">
+                        <div className="p-4 border-b border-white/10 dark:border-gray-700/30">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-3">
                                     {selectedFriend.photoURL ? (
                                         <img
                                             src={selectedFriend.photoURL}
                                             alt={selectedFriend.displayName}
-                                            className="w-14 h-14 rounded-2xl object-cover shadow-lg border-2 border-white/20 dark:border-gray-700/50"
+                                            className="w-12 h-12 rounded-xl object-cover shadow-lg border-2 border-white/20 dark:border-gray-700/50"
                                         />
                                     ) : (
-                                        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                                            <span className="text-white font-bold text-xl">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                            <span className="text-white font-bold text-lg">
                                                 {selectedFriend.displayName?.charAt(0)?.toUpperCase() || 'U'}
                                             </span>
                                         </div>
                                     )}
                                     <div className="flex-1 min-w-0">
-                                        <h2 className="text-xl font-bold text-gray-900 dark:text-white truncate">
+                                        <h2 className="text-lg font-bold text-gray-900 dark:text-white truncate">
                                             {selectedFriend.displayName}
                                         </h2>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                             {selectedFriend.email}
                                         </p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={closeFriendModal}
-                                    className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition-colors"
+                                    className="p-1.5 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-colors"
                                 >
-                                    <X className="w-5 h-5 text-gray-500" />
+                                    <X className="w-4 h-4 text-gray-500" />
                                 </button>
                             </div>
                         </div>
 
                         {/* Content */}
-                        <div className="p-6 space-y-6">
+                        <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(90vh-200px)]">
                             {loadingFriendDetails ? (
-                                <div className="flex justify-center items-center py-8">
-                                    <div className="w-8 h-8 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
-                                    <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">Loading progress...</span>
+                                <div className="flex justify-center items-center py-6">
+                                    <div className="w-6 h-6 border-2 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+                                    <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Loading progress...</span>
                                 </div>
                             ) : friendDetails ? (
                                 <>
                                     {/* Progress Stats */}
-                                    <div className="glass-card-frosted p-5 rounded-2xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                                        <div className="flex items-center space-x-2 mb-4">
-                                            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/50 rounded-xl">
-                                                <TrendingUp className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
+                                    <div className="glass-card-frosted p-4 rounded-xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                                        <div className="flex items-center space-x-2 mb-3">
+                                            <div className="p-1.5 bg-indigo-100 dark:bg-indigo-900/50 rounded-lg">
+                                                <TrendingUp className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
                                             </div>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Learning Progress</h3>
+                                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Learning Progress</h3>
                                         </div>
 
-                                        <div className="flex items-center justify-between mb-4">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="w-6 h-6 bg-blue-500 rounded-lg flex items-center justify-center">
-                                                        <BookOpen className="w-3 h-3 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{friendDetails.stats.totalCourses}</p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Courses</p>
-                                                    </div>
+                                        {/* Compact Stats Grid */}
+                                        <div className="grid grid-cols-2 gap-3 mb-3">
+                                            <div className="flex items-center space-x-2 p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                                <div className="w-5 h-5 bg-blue-500 rounded-md flex items-center justify-center">
+                                                    <BookOpen className="w-2.5 h-2.5 text-white" />
                                                 </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="w-6 h-6 bg-green-500 rounded-lg flex items-center justify-center">
-                                                        <CheckCircle className="w-3 h-3 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{friendDetails.stats.completedCourses}</p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Completed</p>
-                                                    </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{friendDetails.stats.totalCourses}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Courses</p>
                                                 </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="w-6 h-6 bg-purple-500 rounded-lg flex items-center justify-center">
-                                                        <Clock className="w-3 h-3 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{friendDetails.stats.studyHours}h</p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Study Time</p>
-                                                    </div>
+                                            </div>
+                                            <div className="flex items-center space-x-2 p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                                <div className="w-5 h-5 bg-green-500 rounded-md flex items-center justify-center">
+                                                    <CheckCircle className="w-2.5 h-2.5 text-white" />
                                                 </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <div className="w-6 h-6 bg-orange-500 rounded-lg flex items-center justify-center">
-                                                        <Award className="w-3 h-3 text-white" />
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-lg font-bold text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">Completion</p>
-                                                    </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{friendDetails.stats.completedCourses}</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Completed</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center space-x-2 p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                                <div className="w-5 h-5 bg-purple-500 rounded-md flex items-center justify-center">
+                                                    <Clock className="w-2.5 h-2.5 text-white" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{friendDetails.stats.studyHours}h</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Study Time</p>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center space-x-2 p-2 bg-white/60 dark:bg-gray-800/60 rounded-lg">
+                                                <div className="w-5 h-5 bg-orange-500 rounded-md flex items-center justify-center">
+                                                    <Award className="w-2.5 h-2.5 text-white" />
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-bold text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</p>
+                                                    <p className="text-xs text-gray-500 dark:text-gray-400">Completion</p>
                                                 </div>
                                             </div>
                                         </div>
 
                                         {/* Progress Bar */}
-                                        <div className="mt-4">
+                                        <div className="mt-3">
                                             <div className="flex items-center justify-between mb-2">
                                                 <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Overall Progress</span>
                                                 <span className="text-xs font-medium text-gray-900 dark:text-white">{friendDetails.stats.averageCompletion}%</span>
@@ -1145,31 +1144,31 @@ const Friends = () => {
                                     </div>
 
                                     {/* Friends Section */}
-                                    <div className="glass-card-frosted p-5 rounded-2xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
-                                        <div className="flex items-center space-x-2 mb-4">
-                                            <div className="p-2 bg-blue-100 dark:bg-blue-900/50 rounded-xl">
-                                                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                    <div className="glass-card-frosted p-4 rounded-xl hover:scale-[1.02] hover:shadow-lg transition-all duration-300">
+                                        <div className="flex items-center space-x-2 mb-3">
+                                            <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-lg">
+                                                <Users className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                                             </div>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Friends ({selectedFriendsFriends.length})</h3>
+                                            <h3 className="text-base font-semibold text-gray-900 dark:text-white">Friends ({selectedFriendsFriends.length})</h3>
                                         </div>
 
                                         {loadingFriendsFriends ? (
-                                            <div className="flex justify-center items-center py-6">
-                                                <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+                                            <div className="flex justify-center items-center py-4">
+                                                <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
                                                 <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Loading...</span>
                                             </div>
                                         ) : selectedFriendsFriends.length > 0 ? (
-                                            <div className="space-y-2 max-h-48 overflow-y-auto">
+                                            <div className="space-y-2 max-h-40 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500">
                                                 {selectedFriendsFriends.map(friend => {
                                                     const status = getFriendshipStatus(friend.id)
                                                     return (
                                                         <div key={friend.id} className="flex items-center justify-between p-3 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl hover:bg-white/80 dark:hover:bg-gray-800/80 transition-all duration-200">
-                                                            <div className="flex items-center space-x-3">
+                                                            <div className="flex items-center space-x-3 flex-1 min-w-0">
                                                                 {friend.photoURL ? (
                                                                     <img
                                                                         src={friend.photoURL}
                                                                         alt={friend.displayName}
-                                                                        className="w-8 h-8 rounded-lg object-cover border-2 border-white/20 dark:border-gray-700/50"
+                                                                        className="w-8 h-8 rounded-lg object-cover border border-white/20 dark:border-gray-700/50"
                                                                     />
                                                                 ) : (
                                                                     <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-lg flex items-center justify-center">
@@ -1180,36 +1179,36 @@ const Friends = () => {
                                                                 )}
                                                                 <div className="flex-1 min-w-0">
                                                                     <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{friend.displayName}</p>
-                                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{friend.email}</p>
+                                                                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{friend.email}</p>
                                                                 </div>
                                                             </div>
-                                                            <div className="flex-shrink-0">
+                                                            <div className="flex-shrink-0 ml-3">
                                                                 {status === 'self' ? (
-                                                                    <span className="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg">
+                                                                    <span className="px-3 py-1.5 text-sm bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg">
                                                                         You
                                                                     </span>
                                                                 ) : status === 'friends' ? (
                                                                     <button
                                                                         onClick={() => handleFollowUser(friend.id)}
-                                                                        className="flex items-center space-x-1 px-2 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600 text-xs transition-colors"
+                                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm transition-colors"
                                                                     >
-                                                                        <UserMinus className="w-3 h-3" />
+                                                                        <UserMinus className="w-4 h-4" />
                                                                         <span>Unfollow</span>
                                                                     </button>
                                                                 ) : status === 'pending' ? (
-                                                                    <span className="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-lg">
+                                                                    <span className="px-3 py-1.5 text-sm bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-lg">
                                                                         Pending
                                                                     </span>
                                                                 ) : status === 'received' ? (
-                                                                    <span className="px-2 py-1 text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
+                                                                    <span className="px-3 py-1.5 text-sm bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg">
                                                                         Requests you
                                                                     </span>
                                                                 ) : (
                                                                     <button
                                                                         onClick={() => handleFollowUser(friend.id)}
-                                                                        className="flex items-center space-x-1 px-2 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-xs transition-colors"
+                                                                        className="flex items-center space-x-1 px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 text-sm transition-colors"
                                                                     >
-                                                                        <UserPlus className="w-3 h-3" />
+                                                                        <UserPlus className="w-4 h-4" />
                                                                         <span>Follow</span>
                                                                     </button>
                                                                 )}
@@ -1219,9 +1218,9 @@ const Friends = () => {
                                                 })}
                                             </div>
                                         ) : (
-                                            <div className="text-center py-6">
-                                                <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">No friends yet</p>
+                                            <div className="text-center py-4">
+                                                <Users className="w-6 h-6 text-gray-400 mx-auto mb-1" />
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">No friends yet</p>
                                             </div>
                                         )}
                                     </div>
@@ -1235,18 +1234,18 @@ const Friends = () => {
                         </div>
 
                         {/* Footer */}
-                        <div className="px-6 py-4 border-t border-white/10 dark:border-gray-700/30 bg-gray-50/50 dark:bg-gray-800/50">
-                            <div className="flex justify-end space-x-3">
+                        <div className="px-4 py-3 border-t border-white/10 dark:border-gray-700/30 bg-gray-50/50 dark:bg-gray-800/50">
+                            <div className="flex justify-end space-x-2">
                                 <button
                                     onClick={() => window.location.href = `/messages/${selectedFriend.id}`}
-                                    className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
+                                    className="flex items-center space-x-2 px-3 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 text-sm font-medium"
                                 >
                                     <MessageCircle className="w-4 h-4" />
                                     <span>Message</span>
                                 </button>
                                 <button
                                     onClick={closeFriendModal}
-                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-xl hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 text-sm font-medium"
+                                    className="px-3 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-all duration-200 text-sm font-medium"
                                 >
                                     Close
                                 </button>

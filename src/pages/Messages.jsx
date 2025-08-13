@@ -16,7 +16,7 @@ import {
     writeBatch
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
-import { Send, User, ArrowLeft, Smile, MessageCircle, Palette, Upload, X, Crop, Check } from 'lucide-react'
+import { Send, User, ArrowLeft, Smile, MessageCircle, Palette, Upload, X, Crop, Check, Scissors, RotateCcw, RotateCw, RefreshCw, Maximize, Move, Plus, Minus } from 'lucide-react'
 
 const Messages = () => {
     const { friendId } = useParams()
@@ -30,21 +30,143 @@ const Messages = () => {
     const [showEmojiPicker, setShowEmojiPicker] = useState(false)
     const [showThemePicker, setShowThemePicker] = useState(false)
     const [selectedTheme, setSelectedTheme] = useState('default')
-    const [customWallpaper, setCustomWallpaper] = useState(null)
-    const [customColors, setCustomColors] = useState({
-        sentMessage: '#3B82F6',
-        receivedMessage: '#F3F4F6',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+    const [customWallpaper, setCustomWallpaper] = useState(() => {
+        // Load wallpaper from localStorage on component mount
+        const saved = localStorage.getItem(`wallpaper_${friendId}`)
+        return saved ? JSON.parse(saved) : null
     })
+    const [customColors, setCustomColors] = useState(() => {
+        // Load colors from localStorage on component mount
+        const saved = localStorage.getItem(`colors_${friendId}`)
+        return saved ? JSON.parse(saved) : {
+            sentMessage: '#3B82F6',
+            receivedMessage: '#F3F4F6',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        }
+    })
+
+    // Wrapper functions to save to localStorage when state changes
+    const saveWallpaper = (wallpaper) => {
+        setCustomWallpaper(wallpaper)
+        if (wallpaper) {
+            localStorage.setItem(`wallpaper_${friendId}`, JSON.stringify(wallpaper))
+        } else {
+            localStorage.removeItem(`wallpaper_${friendId}`)
+        }
+    }
+
+    const saveColors = (colors) => {
+        setCustomColors(colors)
+        localStorage.setItem(`colors_${friendId}`, JSON.stringify(colors))
+    }
+
+    // Advanced crop functions
+    const addToHistory = (newCropArea) => {
+        const newHistory = cropHistory.slice(0, historyIndex + 1)
+        newHistory.push(newCropArea)
+        setCropHistory(newHistory)
+        setHistoryIndex(newHistory.length - 1)
+    }
+
+    const undo = () => {
+        if (historyIndex > 0) {
+            const newIndex = historyIndex - 1
+            setHistoryIndex(newIndex)
+            setCropArea(cropHistory[newIndex])
+        }
+    }
+
+    const redo = () => {
+        if (historyIndex < cropHistory.length - 1) {
+            const newIndex = historyIndex + 1
+            setHistoryIndex(newIndex)
+            setCropArea(cropHistory[newIndex])
+        }
+    }
+
+    const resetCrop = () => {
+        if (cropImageRef.current) {
+            const image = cropImageRef.current
+            const imageWidth = image.naturalWidth
+            const imageHeight = image.naturalHeight
+
+            const cropWidth = Math.min(imageWidth * 0.8, 1000)
+            const cropHeight = Math.min(imageHeight * 0.8, 800)
+
+            const cropX = (imageWidth - cropWidth) / 2
+            const cropY = (imageHeight - cropHeight) / 2
+
+            const newCropArea = {
+                x: cropX,
+                y: cropY,
+                width: cropWidth,
+                height: cropHeight,
+                imageWidth,
+                imageHeight
+            }
+
+            setCropArea(newCropArea)
+            addToHistory(newCropArea)
+        }
+    }
+
+    const fitToScreen = () => {
+        if (cropImageRef.current && cropContainerRef.current) {
+            const image = cropImageRef.current
+            const container = cropContainerRef.current
+            const imageWidth = image.naturalWidth
+            const imageHeight = image.naturalHeight
+
+            const containerRect = container.getBoundingClientRect()
+            const scaleX = containerRect.width / imageWidth
+            const scaleY = containerRect.height / imageHeight
+            const scale = Math.min(scaleX, scaleY, 1)
+
+            setImageScale(scale)
+            setZoomLevel(scale)
+        }
+    }
+
+    const centerCrop = () => {
+        if (cropImageRef.current) {
+            const image = cropImageRef.current
+            const imageWidth = image.naturalWidth
+            const imageHeight = image.naturalHeight
+
+            const newCropArea = {
+                ...cropArea,
+                x: (imageWidth - cropArea.width) / 2,
+                y: (imageHeight - cropArea.height) / 2
+            }
+
+            setCropArea(newCropArea)
+            addToHistory(newCropArea)
+        }
+    }
     const [showCropModal, setShowCropModal] = useState(false)
     const [cropImage, setCropImage] = useState(null)
-    const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 0, height: 0 })
+    const [cropArea, setCropArea] = useState({ x: 0, y: 0, width: 0, height: 0, imageWidth: 0, imageHeight: 0 })
     const [isDragging, setIsDragging] = useState(false)
+    const [isResizing, setIsResizing] = useState(false)
+    const [resizeHandle, setResizeHandle] = useState(null) // 'nw', 'ne', 'sw', 'se', 'n', 's', 'e', 'w'
     const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
+    const [aspectRatio, setAspectRatio] = useState('free')
+    const [zoomLevel, setZoomLevel] = useState(1)
+    const [rotation, setRotation] = useState(0)
+    const [cropMode, setCropMode] = useState('select') // 'select', 'move', 'resize'
+    const [showGrid, setShowGrid] = useState(true)
+    const [showGuides, setShowGuides] = useState(true)
+    const [imageScale, setImageScale] = useState(1)
+    const [imageOffset, setImageOffset] = useState({ x: 0, y: 0 })
+    const [isImageDragging, setIsImageDragging] = useState(false)
+    const [imageDragStart, setImageDragStart] = useState({ x: 0, y: 0 })
+    const [cropHistory, setCropHistory] = useState([])
+    const [historyIndex, setHistoryIndex] = useState(-1)
     const messagesEndRef = useRef(null)
     const emojiPickerRef = useRef(null)
     const themePickerRef = useRef(null)
     const fileInputRef = useRef(null)
+    const cropFileInputRef = useRef(null)
     const cropContainerRef = useRef(null)
     const cropImageRef = useRef(null)
 
@@ -61,50 +183,36 @@ const Messages = () => {
         }
     }, [friend])
 
-    // Predefined themes
-    const themes = {
-        default: {
-            name: 'Default',
-            sentMessage: '#3B82F6',
-            receivedMessage: '#F3F4F6',
-            background: darkMode ? '#000000' : '#ffffff',
-            darkBackground: '#000000'
-        },
-        ocean: {
-            name: 'Ocean',
-            sentMessage: '#0ea5e9',
-            receivedMessage: '#e0f2fe',
-            background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
-            darkBackground: 'linear-gradient(135deg, #0c4a6e 0%, #075985 100%)'
-        },
-        sunset: {
-            name: 'Sunset',
-            sentMessage: '#f97316',
-            receivedMessage: '#fed7aa',
-            background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-            darkBackground: 'linear-gradient(135deg, #9a3412 0%, #c2410c 100%)'
-        },
-        forest: {
-            name: 'Forest',
-            sentMessage: '#16a34a',
-            receivedMessage: '#dcfce7',
-            background: 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
-            darkBackground: 'linear-gradient(135deg, #14532d 0%, #166534 100%)'
-        },
-        lavender: {
-            name: 'Lavender',
-            sentMessage: '#8b5cf6',
-            receivedMessage: '#ede9fe',
-            background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-            darkBackground: 'linear-gradient(135deg, #581c87 0%, #6d28d9 100%)'
-        },
-        rose: {
-            name: 'Rose',
-            sentMessage: '#ec4899',
-            receivedMessage: '#fce7f3',
-            background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
-            darkBackground: 'linear-gradient(135deg, #9d174d 0%, #be185d 100%)'
+    // Reload wallpaper and colors when friendId changes
+    React.useEffect(() => {
+        // Load wallpaper from localStorage for this specific friend
+        const savedWallpaper = localStorage.getItem(`wallpaper_${friendId}`)
+        if (savedWallpaper) {
+            setCustomWallpaper(JSON.parse(savedWallpaper))
+        } else {
+            setCustomWallpaper(null)
         }
+
+        // Load colors from localStorage for this specific friend
+        const savedColors = localStorage.getItem(`colors_${friendId}`)
+        if (savedColors) {
+            setCustomColors(JSON.parse(savedColors))
+        } else {
+            setCustomColors({
+                sentMessage: '#3B82F6',
+                receivedMessage: '#F3F4F6',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+            })
+        }
+    }, [friendId])
+
+    // Default theme that adapts to light/dark mode
+    const defaultTheme = {
+        name: 'Default',
+        sentMessage: '#3B82F6',
+        receivedMessage: '#F3F4F6',
+        background: darkMode ? '#000000' : '#ffffff',
+        darkBackground: '#000000'
     }
 
     // Common emojis for the picker
@@ -186,9 +294,9 @@ const Messages = () => {
         setShowEmojiPicker(false)
     }
 
-    // Handle theme selection
-    const handleThemeSelect = (themeKey) => {
-        setSelectedTheme(themeKey)
+    // Handle theme selection (now only default theme)
+    const handleThemeSelect = () => {
+        setSelectedTheme('default')
         setShowThemePicker(false)
     }
 
@@ -201,6 +309,9 @@ const Messages = () => {
                 setCropImage(e.target.result)
                 setShowCropModal(true)
             }
+            reader.onerror = (error) => {
+                console.error('Error reading file:', error)
+            }
             reader.readAsDataURL(file)
         }
     }
@@ -208,71 +319,281 @@ const Messages = () => {
     // Initialize crop area when image loads
     const handleImageLoad = () => {
         if (cropImageRef.current && cropContainerRef.current) {
-            const container = cropContainerRef.current
             const image = cropImageRef.current
-            const containerRect = container.getBoundingClientRect()
-            const imageRect = image.getBoundingClientRect()
 
-            // Calculate crop area to fit container aspect ratio
-            const containerAspect = containerRect.width / containerRect.height
-            const imageAspect = imageRect.width / imageRect.height
+            // Get the actual image dimensions
+            const imageWidth = image.naturalWidth
+            const imageHeight = image.naturalHeight
 
-            let cropWidth, cropHeight
+            // Start with a smaller crop area for better precision
+            const cropWidth = Math.min(imageWidth * 0.6, 800)
+            const cropHeight = Math.min(imageHeight * 0.6, 600)
 
-            if (imageAspect > containerAspect) {
-                // Image is wider, crop width
-                cropHeight = imageRect.height
-                cropWidth = imageRect.height * containerAspect
-            } else {
-                // Image is taller, crop height
-                cropWidth = imageRect.width
-                cropHeight = imageRect.width / containerAspect
-            }
+            const cropX = (imageWidth - cropWidth) / 2
+            const cropY = (imageHeight - cropHeight) / 2
 
-            const cropX = (imageRect.width - cropWidth) / 2
-            const cropY = (imageRect.height - cropHeight) / 2
-
-            setCropArea({
+            const initialCropArea = {
                 x: cropX,
                 y: cropY,
                 width: cropWidth,
-                height: cropHeight
+                height: cropHeight,
+                imageWidth,
+                imageHeight
+            }
+
+            setCropArea(initialCropArea)
+            setCropHistory([initialCropArea])
+            setHistoryIndex(0)
+            fitToScreen()
+        }
+    }
+
+    // Handle crop area interaction
+    const handleMouseDown = (e) => {
+        e.preventDefault()
+
+        if (cropImageRef.current) {
+            const imageRect = cropImageRef.current.getBoundingClientRect()
+            const mouseX = e.clientX - imageRect.left
+            const mouseY = e.clientY - imageRect.top
+
+            // Convert display coordinates to image coordinates
+            const scaleX = cropArea.imageWidth / imageRect.width
+            const scaleY = cropArea.imageHeight / imageRect.height
+            const imageX = mouseX * scaleX
+            const imageY = mouseY * scaleY
+
+            // Check if clicking inside crop area
+            const isInsideCrop = imageX >= cropArea.x && imageX <= cropArea.x + cropArea.width &&
+                imageY >= cropArea.y && imageY <= cropArea.y + cropArea.height
+
+            // Check if clicking on resize handles
+            const handleSize = 15
+            const handleScaleX = handleSize * scaleX
+            const handleScaleY = handleSize * scaleY
+
+            if (isInsideCrop && !isResizing) {
+                // Moving the crop area
+                setIsDragging(true)
+                setCropMode('move')
+            } else if (imageX >= cropArea.x - handleScaleX && imageX <= cropArea.x + handleScaleX &&
+                imageY >= cropArea.y - handleScaleY && imageY <= cropArea.y + handleScaleY) {
+                // Top-left handle
+                setIsResizing(true)
+                setResizeHandle('nw')
+            } else if (imageX >= cropArea.x + cropArea.width - handleScaleX && imageX <= cropArea.x + cropArea.width + handleScaleX &&
+                imageY >= cropArea.y - handleScaleY && imageY <= cropArea.y + handleScaleY) {
+                // Top-right handle
+                setIsResizing(true)
+                setResizeHandle('ne')
+            } else if (imageX >= cropArea.x - handleScaleX && imageX <= cropArea.x + handleScaleX &&
+                imageY >= cropArea.y + cropArea.height - handleScaleY && imageY <= cropArea.y + cropArea.height + handleScaleY) {
+                // Bottom-left handle
+                setIsResizing(true)
+                setResizeHandle('sw')
+            } else if (imageX >= cropArea.x + cropArea.width - handleScaleX && imageX <= cropArea.x + cropArea.width + handleScaleX &&
+                imageY >= cropArea.y + cropArea.height - handleScaleY && imageY <= cropArea.y + cropArea.height + handleScaleY) {
+                // Bottom-right handle
+                setIsResizing(true)
+                setResizeHandle('se')
+            } else if (imageX >= cropArea.x + cropArea.width / 2 - handleScaleX && imageX <= cropArea.x + cropArea.width / 2 + handleScaleX &&
+                imageY >= cropArea.y - handleScaleY && imageY <= cropArea.y + handleScaleY) {
+                // Top handle
+                setIsResizing(true)
+                setResizeHandle('n')
+            } else if (imageX >= cropArea.x + cropArea.width / 2 - handleScaleX && imageX <= cropArea.x + cropArea.width / 2 + handleScaleX &&
+                imageY >= cropArea.y + cropArea.height - handleScaleY && imageY <= cropArea.y + cropArea.height + handleScaleY) {
+                // Bottom handle
+                setIsResizing(true)
+                setResizeHandle('s')
+            } else if (imageX >= cropArea.x - handleScaleX && imageX <= cropArea.x + handleScaleX &&
+                imageY >= cropArea.y + cropArea.height / 2 - handleScaleY && imageY <= cropArea.y + cropArea.height / 2 + handleScaleY) {
+                // Left handle
+                setIsResizing(true)
+                setResizeHandle('w')
+            } else if (imageX >= cropArea.x + cropArea.width - handleScaleX && imageX <= cropArea.x + cropArea.width + handleScaleX &&
+                imageY >= cropArea.y + cropArea.height / 2 - handleScaleY && imageY <= cropArea.y + cropArea.height / 2 + handleScaleY) {
+                // Right handle
+                setIsResizing(true)
+                setResizeHandle('e')
+            } else {
+                // Creating a new crop area or dragging image
+                if (e.ctrlKey || e.metaKey) {
+                    // Dragging image
+                    setIsImageDragging(true)
+                    setImageDragStart({ x: e.clientX, y: e.clientY })
+                } else {
+                    // Creating new crop area
+                    setIsDragging(true)
+                    setCropMode('select')
+                    setCropArea(prev => ({
+                        ...prev,
+                        x: imageX,
+                        y: imageY,
+                        width: 0,
+                        height: 0
+                    }))
+                }
+            }
+
+            setDragStart({
+                x: imageX,
+                y: imageY
             })
         }
     }
 
-    // Handle crop area dragging
-    const handleMouseDown = (e) => {
-        e.preventDefault()
-        setIsDragging(true)
-        setDragStart({
-            x: e.clientX - cropArea.x,
-            y: e.clientY - cropArea.y
-        })
-    }
-
     const handleMouseMove = (e) => {
-        if (!isDragging) return
+        if (!isDragging && !isResizing && !isImageDragging) return
 
         e.preventDefault()
-        const newX = e.clientX - dragStart.x
-        const newY = e.clientY - dragStart.y
 
         if (cropImageRef.current) {
             const imageRect = cropImageRef.current.getBoundingClientRect()
-            const maxX = imageRect.width - cropArea.width
-            const maxY = imageRect.height - cropArea.height
+            const mouseX = e.clientX - imageRect.left
+            const mouseY = e.clientY - imageRect.top
 
-            setCropArea(prev => ({
-                ...prev,
-                x: Math.max(0, Math.min(newX, maxX)),
-                y: Math.max(0, Math.min(newY, maxY))
-            }))
+            // Convert display coordinates to image coordinates
+            const scaleX = cropArea.imageWidth / imageRect.width
+            const scaleY = cropArea.imageHeight / imageRect.height
+            const newImageX = mouseX * scaleX
+            const newImageY = mouseY * scaleY
+
+            if (isImageDragging) {
+                // Dragging the image
+                const deltaX = e.clientX - imageDragStart.x
+                const deltaY = e.clientY - imageDragStart.y
+
+                setImageOffset(prev => ({
+                    x: prev.x + deltaX,
+                    y: prev.y + deltaY
+                }))
+                setImageDragStart({ x: e.clientX, y: e.clientY })
+            } else if (cropMode === 'move') {
+                // Moving the crop area
+                const maxX = cropArea.imageWidth - cropArea.width
+                const maxY = cropArea.imageHeight - cropArea.height
+
+                const newCropArea = {
+                    ...cropArea,
+                    x: Math.max(0, Math.min(newImageX - dragStart.x + cropArea.x, maxX)),
+                    y: Math.max(0, Math.min(newImageY - dragStart.y + cropArea.y, maxY))
+                }
+
+                setCropArea(newCropArea)
+            } else if (cropMode === 'select') {
+                // Creating/selecting crop area
+                const minSize = 20 // Minimum crop size
+                const width = Math.abs(newImageX - dragStart.x)
+                const height = Math.abs(newImageY - dragStart.y)
+
+                if (width >= minSize && height >= minSize) {
+                    const x = Math.min(dragStart.x, newImageX)
+                    const y = Math.min(dragStart.y, newImageY)
+
+                    // Ensure crop area stays within image bounds
+                    const boundedX = Math.max(0, Math.min(x, cropArea.imageWidth - width))
+                    const boundedY = Math.max(0, Math.min(y, cropArea.imageHeight - height))
+                    const boundedWidth = Math.min(width, cropArea.imageWidth - boundedX)
+                    const boundedHeight = Math.min(height, cropArea.imageHeight - boundedY)
+
+                    const newCropArea = {
+                        ...cropArea,
+                        x: boundedX,
+                        y: boundedY,
+                        width: boundedWidth,
+                        height: boundedHeight
+                    }
+
+                    setCropArea(newCropArea)
+                }
+            } else if (isResizing) {
+                // Resizing the crop area
+                const minSize = 50
+                let newWidth = cropArea.width
+                let newHeight = cropArea.height
+                let newX = cropArea.x
+                let newY = cropArea.y
+
+                switch (resizeHandle) {
+                    case 'nw':
+                        newWidth = cropArea.x + cropArea.width - newImageX
+                        newHeight = cropArea.y + cropArea.height - newImageY
+                        newX = newImageX
+                        newY = newImageY
+                        break
+                    case 'ne':
+                        newWidth = newImageX - cropArea.x
+                        newHeight = cropArea.y + cropArea.height - newImageY
+                        newY = newImageY
+                        break
+                    case 'sw':
+                        newWidth = cropArea.x + cropArea.width - newImageX
+                        newHeight = newImageY - cropArea.y
+                        newX = newImageX
+                        break
+                    case 'se':
+                        newWidth = newImageX - cropArea.x
+                        newHeight = newImageY - cropArea.y
+                        break
+                    case 'n':
+                        newHeight = cropArea.y + cropArea.height - newImageY
+                        newY = newImageY
+                        break
+                    case 's':
+                        newHeight = newImageY - cropArea.y
+                        break
+                    case 'w':
+                        newWidth = cropArea.x + cropArea.width - newImageX
+                        newX = newImageX
+                        break
+                    case 'e':
+                        newWidth = newImageX - cropArea.x
+                        break
+                }
+
+                // Apply minimum size constraints
+                if (newWidth >= minSize && newHeight >= minSize) {
+                    // Apply aspect ratio if locked
+                    if (aspectRatio !== 'free') {
+                        const aspectRatioValue = aspectRatio === '16:9' ? 16 / 9 : 4 / 3
+                        if (newWidth / newHeight > aspectRatioValue) {
+                            newHeight = newWidth / aspectRatioValue
+                        } else {
+                            newWidth = newHeight * aspectRatioValue
+                        }
+                    }
+
+                    // Ensure crop area stays within image bounds
+                    if (newX >= 0 && newY >= 0 &&
+                        newX + newWidth <= cropArea.imageWidth &&
+                        newY + newHeight <= cropArea.imageHeight) {
+
+                        const newCropArea = {
+                            ...cropArea,
+                            x: newX,
+                            y: newY,
+                            width: newWidth,
+                            height: newHeight
+                        }
+
+                        setCropArea(newCropArea)
+                    }
+                }
+            }
         }
     }
 
     const handleMouseUp = () => {
+        if (isDragging || isResizing) {
+            addToHistory(cropArea)
+        }
+
         setIsDragging(false)
+        setIsResizing(false)
+        setIsImageDragging(false)
+        setResizeHandle(null)
+        setCropMode('select')
     }
 
     // Apply crop and set wallpaper
@@ -286,19 +607,36 @@ const Messages = () => {
             canvas.width = cropArea.width
             canvas.height = cropArea.height
 
-            // Draw cropped portion
+            // Save the current context
+            ctx.save()
+
+            // Apply rotation if needed
+            if (rotation !== 0) {
+                ctx.translate(canvas.width / 2, canvas.height / 2)
+                ctx.rotate((rotation * Math.PI) / 180)
+                ctx.translate(-canvas.width / 2, -canvas.height / 2)
+            }
+
+            // Draw cropped portion using image coordinates
             ctx.drawImage(
                 image,
                 cropArea.x, cropArea.y, cropArea.width, cropArea.height,
                 0, 0, cropArea.width, cropArea.height
             )
 
+            // Restore the context
+            ctx.restore()
+
             // Convert to data URL and set as wallpaper
             const croppedImage = canvas.toDataURL('image/jpeg', 0.9)
-            setCustomWallpaper(croppedImage)
+            saveWallpaper(croppedImage)
             setSelectedTheme('custom')
             setShowCropModal(false)
             setCropImage(null)
+            setCropArea({ x: 0, y: 0, width: 0, height: 0, imageWidth: 0, imageHeight: 0 })
+            setAspectRatio('16:9')
+            setZoomLevel(1)
+            setRotation(0)
         }
     }
 
@@ -306,24 +644,62 @@ const Messages = () => {
     const cancelCrop = () => {
         setShowCropModal(false)
         setCropImage(null)
-        setCropArea({ x: 0, y: 0, width: 0, height: 0 })
+        setCropArea({ x: 0, y: 0, width: 0, height: 0, imageWidth: 0, imageHeight: 0 })
+        setIsDragging(false)
+        setIsResizing(false)
+        setIsImageDragging(false)
+        setResizeHandle(null)
+        setCropMode('select')
+        setAspectRatio('free')
+        setZoomLevel(1)
+        setRotation(0)
+        setShowGrid(true)
+        setShowGuides(true)
+        setImageScale(1)
+        setImageOffset({ x: 0, y: 0 })
+        setCropHistory([])
+        setHistoryIndex(-1)
+    }
+
+    // Handle aspect ratio change
+    const handleAspectRatioChange = (ratio) => {
+        setAspectRatio(ratio)
+        // For now, just change the ratio without affecting current crop
+        // Users can manually adjust the crop area as needed
+    }
+
+    // Handle zoom change
+    const handleZoomChange = (newZoom) => {
+        const clampedZoom = Math.max(0.5, Math.min(3, newZoom))
+        setZoomLevel(clampedZoom)
+    }
+
+    // Handle rotation
+    const handleRotation = () => {
+        const newRotation = (rotation + 90) % 360
+        setRotation(newRotation)
     }
 
     // Handle custom color changes
     const handleCustomColorChange = (type, value) => {
-        setCustomColors(prev => ({
-            ...prev,
+        const newColors = {
+            ...customColors,
             [type]: value
-        }))
+        }
+        saveColors(newColors)
         setSelectedTheme('custom')
     }
 
     // Get current theme colors
     const getCurrentTheme = () => {
-        if (selectedTheme === 'custom') {
-            return customColors
+        if (customWallpaper) {
+            return {
+                background: `url(${customWallpaper}) center/cover fixed`,
+                sentMessage: customColors.sentMessage,
+                receivedMessage: customColors.receivedMessage
+            }
         }
-        return themes[selectedTheme] || themes.default
+        return defaultTheme
     }
 
     // Mark messages as seen when user opens the chat
@@ -551,7 +927,7 @@ const Messages = () => {
         : { background: currentTheme.background }
 
     return (
-        <div className="h-full flex flex-col" style={backgroundStyle}>
+        <div className="h-screen flex flex-col" style={backgroundStyle}>
             {/* Header - Premium and Minimal - Fixed to Viewport Top */}
             <div className="flex-shrink-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 px-4 py-3 fixed top-14 left-0 right-0 lg:left-64 z-50">
                 <div className="flex items-center justify-between">
@@ -584,29 +960,122 @@ const Messages = () => {
                         </div>
                     </div>
 
-                    {/* Theme Button */}
-                    <button
-                        onClick={() => setShowThemePicker(!showThemePicker)}
-                        className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                    >
-                        <Palette className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    </button>
+                    {/* Theme Button with Dropdown */}
+                    <div className="relative">
+                        <button
+                            onClick={() => setShowThemePicker(!showThemePicker)}
+                            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                        >
+                            <Palette className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        </button>
+
+                        {/* Theme Picker Dropdown */}
+                        {showThemePicker && (
+                            <div
+                                ref={themePickerRef}
+                                className="absolute top-full right-0 mt-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-white/20 dark:border-gray-700/50 rounded-2xl shadow-2xl p-6 w-80 z-50"
+                            >
+                                <div className="space-y-6">
+                                    {/* Header */}
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Chat Theme</h3>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Customize your chat appearance</p>
+                                    </div>
+
+                                    {/* Theme Customization */}
+                                    <div className="space-y-5">
+                                        {/* Custom Wallpaper */}
+                                        <div className="space-y-3">
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Wallpaper</label>
+                                            </div>
+                                            <div className="flex space-x-2">
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleWallpaperUpload}
+                                                    className="hidden"
+                                                />
+                                                <button
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 text-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg hover:shadow-xl"
+                                                >
+                                                    <Upload className="w-4 h-4" />
+                                                    <span>Upload Image</span>
+                                                </button>
+                                                {customWallpaper && (
+                                                    <button
+                                                        onClick={() => saveWallpaper(null)}
+                                                        className="px-4 py-3 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all duration-200"
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Custom Colors */}
+                                        <div className="space-y-4">
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                                                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Message Colors</label>
+                                            </div>
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <div className="space-y-2">
+                                                    <label className="block text-xs text-gray-500 dark:text-gray-400">Sent Message</label>
+                                                    <div className="flex items-center space-x-3">
+                                                        <div
+                                                            className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-700 shadow-lg"
+                                                            style={{ backgroundColor: customColors.sentMessage }}
+                                                        ></div>
+                                                        <input
+                                                            type="color"
+                                                            value={customColors.sentMessage}
+                                                            onChange={(e) => handleCustomColorChange('sentMessage', e.target.value)}
+                                                            className="w-8 h-8 rounded-full border-2 border-gray-200 dark:border-gray-600 cursor-pointer"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <label className="block text-xs text-gray-500 dark:text-gray-400">Received Message</label>
+                                                    <div className="flex items-center space-x-3">
+                                                        <div
+                                                            className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-700 shadow-lg"
+                                                            style={{ backgroundColor: customColors.receivedMessage }}
+                                                        ></div>
+                                                        <input
+                                                            type="color"
+                                                            value={customColors.receivedMessage}
+                                                            onChange={(e) => handleCustomColorChange('receivedMessage', e.target.value)}
+                                                            className="w-8 h-8 rounded-full border-2 border-gray-200 dark:border-gray-600 cursor-pointer"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
             {/* Messages Area - Clean and Minimal */}
-            <div className="flex-1 overflow-y-auto pt-16 pb-20" style={{ background: 'transparent' }}>
+            <div className="flex-1 overflow-y-auto pt-16 pb-20">
                 {loading ? (
                     <div className="flex justify-center items-center h-full">
                         <div className="w-6 h-6 border-2 border-gray-300 border-t-gray-600 dark:border-gray-600 dark:border-t-gray-400 rounded-full animate-spin"></div>
                     </div>
                 ) : messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full px-4">
-                        <div className="w-16 h-16 bg-gray-200 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-                            <MessageCircle className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                        <div className="w-16 h-16 bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4">
+                            <MessageCircle className="w-8 h-8 text-gray-600 dark:text-gray-400" />
                         </div>
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No messages yet</h3>
-                        <p className="text-gray-500 dark:text-gray-400 text-center text-sm">Start a conversation with {friendData.displayName}</p>
+                        <p className="text-gray-600 dark:text-gray-300 text-center text-sm">Start a conversation with {friendData.displayName}</p>
                     </div>
                 ) : (
                     <div className="px-4 space-y-3">
@@ -614,8 +1083,8 @@ const Messages = () => {
                             if (item.type === 'date-separator') {
                                 return (
                                     <div key={item.id} className="flex justify-center my-4">
-                                        <div className="px-3 py-1 bg-gray-200 dark:bg-gray-700 rounded-full">
-                                            <span className="text-xs text-gray-600 dark:text-gray-300 font-medium">
+                                        <div className="px-3 py-1 bg-white/20 dark:bg-gray-800/20 backdrop-blur-sm rounded-full">
+                                            <span className="text-xs text-gray-700 dark:text-gray-200 font-medium">
                                                 {formatDateSeparator(item.timestamp)}
                                             </span>
                                         </div>
@@ -684,105 +1153,7 @@ const Messages = () => {
                     </div>
                 )}
 
-                {/* Theme Picker */}
-                {showThemePicker && (
-                    <div
-                        ref={themePickerRef}
-                        className="absolute bottom-full left-4 right-4 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-h-96 overflow-y-auto z-10"
-                    >
-                        <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Chat Theme</h3>
-                                <button
-                                    onClick={() => setShowThemePicker(false)}
-                                    className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            </div>
 
-                            {/* Predefined Themes */}
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Predefined Themes</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {Object.entries(themes).map(([key, theme]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => handleThemeSelect(key)}
-                                            className={`p-3 rounded-lg border-2 transition-all ${selectedTheme === key
-                                                ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
-                                                }`}
-                                        >
-                                            <div
-                                                className="w-full h-8 rounded mb-2"
-                                                style={{ background: theme.background }}
-                                            ></div>
-                                            <p className="text-xs font-medium text-gray-700 dark:text-gray-300">{theme.name}</p>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Custom Theme */}
-                            <div>
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Custom Theme</h4>
-                                <div className="space-y-3">
-                                    {/* Custom Wallpaper */}
-                                    <div>
-                                        <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Wallpaper</label>
-                                        <div className="flex space-x-2">
-                                            <input
-                                                ref={fileInputRef}
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleWallpaperUpload}
-                                                className="hidden"
-                                            />
-                                            <button
-                                                onClick={() => fileInputRef.current?.click()}
-                                                className="flex items-center space-x-2 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
-                                            >
-                                                <Upload className="w-4 h-4" />
-                                                <span>Upload Image</span>
-                                            </button>
-                                            {customWallpaper && (
-                                                <button
-                                                    onClick={() => setCustomWallpaper(null)}
-                                                    className="px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg"
-                                                >
-                                                    Remove
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {/* Custom Colors */}
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Sent Message</label>
-                                            <input
-                                                type="color"
-                                                value={customColors.sentMessage}
-                                                onChange={(e) => handleCustomColorChange('sentMessage', e.target.value)}
-                                                className="w-full h-8 rounded border border-gray-300 dark:border-gray-600"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-gray-600 dark:text-gray-400 mb-1">Received Message</label>
-                                            <input
-                                                type="color"
-                                                value={customColors.receivedMessage}
-                                                onChange={(e) => handleCustomColorChange('receivedMessage', e.target.value)}
-                                                className="w-full h-8 rounded border border-gray-300 dark:border-gray-600"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
 
                 <form onSubmit={handleSendMessage} className="flex space-x-2">
                     <div className="flex-1 relative">
@@ -811,34 +1182,58 @@ const Messages = () => {
                 </form>
             </div>
 
-            {/* Crop Modal */}
+            {/* Premium Crop Modal */}
             {showCropModal && (
-                <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-5xl w-full mx-4 max-h-[95vh] overflow-hidden">
-                        {/* Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
-                            <div>
-                                <h3 className="text-xl font-semibold text-gray-900 dark:text-white">Crop Wallpaper</h3>
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                                    Drag the crop area to select which part of the image to use as your wallpaper.
-                                </p>
+                <div className="fixed inset-0 bg-black/95 backdrop-blur-sm flex items-center justify-center z-[9999]" onClick={(e) => e.stopPropagation()}>
+                    <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl rounded-2xl shadow-2xl max-w-7xl w-full mx-4 max-h-[98vh] overflow-hidden border border-white/20 dark:border-gray-700/50">
+                        {/* Premium Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-800/50 dark:to-gray-900/50">
+                            <div className="flex items-center space-x-4">
+                                <div className="flex items-center space-x-2">
+                                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                                        <Scissors className="w-4 h-4 text-white" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-xl font-bold text-gray-900 dark:text-white">Premium Crop Editor</h3>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                            Professional image cropping with advanced tools
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                            <button
-                                onClick={cancelCrop}
-                                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={undo}
+                                    disabled={historyIndex <= 0}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Undo (Ctrl+Z)"
+                                >
+                                    <RotateCcw className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={redo}
+                                    disabled={historyIndex >= cropHistory.length - 1}
+                                    className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    title="Redo (Ctrl+Y)"
+                                >
+                                    <RotateCw className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={cancelCrop}
+                                    className="p-2 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-red-500" />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Main Content */}
-                        <div className="flex">
+                        <div className="flex h-[calc(98vh-200px)]">
                             {/* Image Area */}
                             <div className="flex-1 p-6">
                                 <div
                                     ref={cropContainerRef}
-                                    className="relative bg-gray-100 dark:bg-gray-900 rounded-lg overflow-hidden"
-                                    style={{ aspectRatio: '16/9' }}
+                                    className="relative bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 rounded-xl overflow-hidden border border-gray-300/50 dark:border-gray-600/50 h-full"
                                     onMouseMove={handleMouseMove}
                                     onMouseUp={handleMouseUp}
                                     onMouseLeave={handleMouseUp}
@@ -852,99 +1247,259 @@ const Messages = () => {
                                                 className="w-full h-full object-contain"
                                                 onLoad={handleImageLoad}
                                                 draggable={false}
+                                                style={{
+                                                    transform: `scale(${zoomLevel}) rotate(${rotation}deg) translate(${imageOffset.x}px, ${imageOffset.y}px)`,
+                                                    transformOrigin: 'center'
+                                                }}
                                             />
 
                                             {/* Dark overlay outside crop area */}
-                                            <div className="absolute inset-0 bg-black/50">
+                                            <div className="absolute inset-0 bg-black/60">
                                                 <div
                                                     className="absolute border-2 border-white shadow-2xl cursor-move select-none"
                                                     style={{
-                                                        left: `${cropArea.x}px`,
-                                                        top: `${cropArea.y}px`,
-                                                        width: `${cropArea.width}px`,
-                                                        height: `${cropArea.height}px`,
+                                                        left: `${(cropArea.x / cropArea.imageWidth) * 100}%`,
+                                                        top: `${(cropArea.y / cropArea.imageHeight) * 100}%`,
+                                                        width: `${(cropArea.width / cropArea.imageWidth) * 100}%`,
+                                                        height: `${(cropArea.height / cropArea.imageHeight) * 100}%`,
                                                         pointerEvents: 'auto',
-                                                        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.5)'
+                                                        boxShadow: '0 0 0 9999px rgba(0, 0, 0, 0.6)'
                                                     }}
                                                     onMouseDown={handleMouseDown}
+                                                    onMouseMove={handleMouseMove}
+                                                    onMouseUp={handleMouseUp}
                                                 >
-                                                    {/* Corner handles */}
-                                                    <div className="absolute -top-1 -left-1 w-3 h-3 bg-white rounded-full border-2 border-blue-500"></div>
-                                                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-blue-500"></div>
-                                                    <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-white rounded-full border-2 border-blue-500"></div>
-                                                    <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-white rounded-full border-2 border-blue-500"></div>
+                                                    {/* Resize handles */}
+                                                    <div className="absolute -top-2 -left-2 w-4 h-4 bg-white rounded-full border-2 border-blue-500 cursor-nw-resize hover:bg-blue-50 transition-colors"></div>
+                                                    <div className="absolute -top-2 -right-2 w-4 h-4 bg-white rounded-full border-2 border-blue-500 cursor-ne-resize hover:bg-blue-50 transition-colors"></div>
+                                                    <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-white rounded-full border-2 border-blue-500 cursor-sw-resize hover:bg-blue-50 transition-colors"></div>
+                                                    <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-white rounded-full border-2 border-blue-500 cursor-se-resize hover:bg-blue-50 transition-colors"></div>
+
+                                                    {/* Edge handles */}
+                                                    <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full border border-blue-500 cursor-n-resize"></div>
+                                                    <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white rounded-full border border-blue-500 cursor-s-resize"></div>
+                                                    <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full border border-blue-500 cursor-w-resize"></div>
+                                                    <div className="absolute right-1/2 top-1/2 transform translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full border border-blue-500 cursor-e-resize"></div>
 
                                                     {/* Center guides */}
-                                                    <div className="absolute top-1/2 left-0 w-full h-px bg-white/30 transform -translate-y-1/2"></div>
-                                                    <div className="absolute left-1/2 top-0 w-px h-full bg-white/30 transform -translate-x-1/2"></div>
+                                                    {showGuides && (
+                                                        <>
+                                                            <div className="absolute top-1/2 left-0 w-full h-px bg-white/60 transform -translate-y-1/2"></div>
+                                                            <div className="absolute left-1/2 top-0 w-px h-full bg-white/60 transform -translate-x-1/2"></div>
+                                                        </>
+                                                    )}
+
+                                                    {/* Grid overlay */}
+                                                    {showGrid && (
+                                                        <div className="absolute inset-0 pointer-events-none">
+                                                            <div className="w-full h-full grid grid-cols-3 grid-rows-3">
+                                                                {Array.from({ length: 9 }).map((_, i) => (
+                                                                    <div key={i} className="border border-white/20"></div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
+                                            </div>
+
+                                            {/* Info overlay */}
+                                            <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm text-white px-3 py-2 rounded-lg text-sm">
+                                                <div>Size: {Math.round(cropArea.width)} × {Math.round(cropArea.height)}</div>
+                                                <div>Position: {Math.round(cropArea.x)}, {Math.round(cropArea.y)}</div>
                                             </div>
                                         </>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Tools Panel */}
-                            <div className="w-64 p-6 border-l border-gray-200 dark:border-gray-700">
-                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-4">Crop Tools</h4>
+                            {/* Advanced Tools Panel */}
+                            <div className="w-80 p-6 border-l border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-b from-gray-50/30 to-white/30 dark:from-gray-800/30 dark:to-gray-900/30">
+                                <div className="space-y-6">
+                                    {/* Quick Actions */}
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Quick Actions</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <button
+                                                onClick={resetCrop}
+                                                className="flex items-center justify-center space-x-2 px-3 py-2 text-sm bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all duration-200"
+                                            >
+                                                <RefreshCw className="w-4 h-4" />
+                                                <span>Reset</span>
+                                            </button>
+                                            <button
+                                                onClick={fitToScreen}
+                                                className="flex items-center justify-center space-x-2 px-3 py-2 text-sm bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all duration-200"
+                                            >
+                                                <Maximize className="w-4 h-4" />
+                                                <span>Fit Screen</span>
+                                            </button>
+                                            <button
+                                                onClick={centerCrop}
+                                                className="flex items-center justify-center space-x-2 px-3 py-2 text-sm bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all duration-200"
+                                            >
+                                                <Move className="w-4 h-4" />
+                                                <span>Center</span>
+                                            </button>
+                                            <button
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="flex items-center justify-center space-x-2 px-3 py-2 text-sm bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-200"
+                                            >
+                                                <Upload className="w-4 h-4" />
+                                                <span>New Image</span>
+                                            </button>
+                                        </div>
+                                    </div>
 
-                                <div className="space-y-4">
                                     {/* Aspect Ratio */}
                                     <div>
-                                        <label className="block text-xs text-gray-600 dark:text-gray-400 mb-2">Aspect Ratio</label>
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <button className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg">
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Aspect Ratio</label>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <button
+                                                onClick={() => handleAspectRatioChange('16:9')}
+                                                className={`px-3 py-2 text-sm rounded-lg transition-all duration-200 ${aspectRatio === '16:9'
+                                                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                                    }`}
+                                            >
                                                 16:9
                                             </button>
-                                            <button className="px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg">
+                                            <button
+                                                onClick={() => handleAspectRatioChange('4:3')}
+                                                className={`px-3 py-2 text-sm rounded-lg transition-all duration-200 ${aspectRatio === '4:3'
+                                                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                                    }`}
+                                            >
                                                 4:3
+                                            </button>
+                                            <button
+                                                onClick={() => handleAspectRatioChange('free')}
+                                                className={`px-3 py-2 text-sm rounded-lg transition-all duration-200 ${aspectRatio === 'free'
+                                                    ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                                    }`}
+                                            >
+                                                Free
                                             </button>
                                         </div>
                                     </div>
 
                                     {/* Zoom Controls */}
                                     <div>
-                                        <label className="block text-xs text-gray-600 dark:text-gray-400 mb-2">Zoom</label>
-                                        <div className="flex items-center space-x-2">
-                                            <button className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg">
-                                                <span className="text-sm">-</span>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Zoom</label>
+                                        <div className="flex items-center space-x-3">
+                                            <button
+                                                onClick={() => handleZoomChange(zoomLevel - 0.1)}
+                                                className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                            >
+                                                <Minus className="w-4 h-4" />
                                             </button>
                                             <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                                <div className="bg-blue-600 h-2 rounded-full w-1/3"></div>
+                                                <div
+                                                    className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full transition-all duration-200"
+                                                    style={{ width: `${((zoomLevel - 0.5) / 2.5) * 100}%` }}
+                                                ></div>
                                             </div>
-                                            <button className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg">
-                                                <span className="text-sm">+</span>
+                                            <button
+                                                onClick={() => handleZoomChange(zoomLevel + 0.1)}
+                                                className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                            >
+                                                <Plus className="w-4 h-4" />
                                             </button>
+                                        </div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                                            {Math.round(zoomLevel * 100)}%
                                         </div>
                                     </div>
 
-                                    {/* Rotation */}
+                                    {/* Rotation Controls */}
                                     <div>
-                                        <label className="block text-xs text-gray-600 dark:text-gray-400 mb-2">Rotation</label>
-                                        <button className="w-full px-3 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg">
-                                            <span className="mr-2">↻</span>
-                                            Rotate
-                                        </button>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Rotation</label>
+                                        <div className="flex items-center space-x-3">
+                                            <button
+                                                onClick={handleRotation}
+                                                className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                            >
+                                                <RotateCcw className="w-4 h-4" />
+                                            </button>
+                                            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                                <div
+                                                    className="bg-gradient-to-r from-green-500 to-green-600 h-2 rounded-full transition-all duration-200"
+                                                    style={{ width: `${((rotation % 360) / 360) * 100}%` }}
+                                                ></div>
+                                            </div>
+                                            <button
+                                                onClick={handleRotation}
+                                                className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                                            >
+                                                <RotateCw className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">
+                                            {rotation}°
+                                        </div>
+                                    </div>
+
+                                    {/* Display Options */}
+                                    <div>
+                                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Display</label>
+                                        <div className="space-y-2">
+                                            <label className="flex items-center space-x-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={showGrid}
+                                                    onChange={(e) => setShowGrid(e.target.checked)}
+                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-600 dark:text-gray-400">Show Grid</span>
+                                            </label>
+                                            <label className="flex items-center space-x-2">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={showGuides}
+                                                    onChange={(e) => setShowGuides(e.target.checked)}
+                                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                                />
+                                                <span className="text-sm text-gray-600 dark:text-gray-400">Show Guides</span>
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    {/* Keyboard Shortcuts */}
+                                    <div>
+                                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Shortcuts</h4>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 space-y-1">
+                                            <div>• Ctrl + Drag: Move image</div>
+                                            <div>• Drag handles: Resize crop</div>
+                                            <div>• Drag inside: Move crop area</div>
+                                            <div>• Drag outside: Create new crop</div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Footer */}
-                        <div className="flex items-center justify-between p-6 border-t border-gray-200 dark:border-gray-700">
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                            >
-                                Upload Again
-                            </button>
-                            <button
-                                onClick={applyCrop}
-                                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center space-x-2 transition-colors"
-                            >
-                                <Check className="w-4 h-4" />
-                                <span>Save</span>
-                            </button>
+                        {/* Premium Footer */}
+                        <div className="flex items-center justify-between p-6 border-t border-gray-200/50 dark:border-gray-700/50 bg-gradient-to-r from-gray-50/50 to-white/50 dark:from-gray-800/50 dark:to-gray-900/50">
+                            <div className="flex items-center space-x-4">
+                                <div className="text-sm text-gray-600 dark:text-gray-400">
+                                    <span className="font-medium">Tip:</span> Hold Ctrl/Cmd and drag to move the image around
+                                </div>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                                <button
+                                    onClick={cancelCrop}
+                                    className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={applyCrop}
+                                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg hover:from-blue-600 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 shadow-lg hover:shadow-xl"
+                                >
+                                    Apply Crop
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
