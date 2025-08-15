@@ -720,12 +720,12 @@ const Messages = () => {
                         {showThemePicker && (
                             <div
                                 ref={themePickerRef}
-                                className="absolute top-full right-0 mt-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-gray-100 dark:border-gray-600 rounded-xl shadow-lg p-4 w-72 z-50 animate-in slide-in-from-top-2 duration-200"
+                                className="absolute top-full right-0 mt-2 bg-white/90 dark:bg-black/90 backdrop-blur-md border border-gray-100 dark:border-gray-600 rounded-xl shadow-lg p-4 w-72 z-50 animate-in slide-in-from-top-2 duration-200"
                             >
                                 <div className="space-y-4">
                                     {/* Header */}
                                     <div className="flex items-center justify-between pb-2 border-b border-gray-100 dark:border-gray-600">
-                                        <h3 className="text-sm font-semibold text-gray-800 dark:text-white">Theme</h3>
+                                        <h3 className="text-sm font-semibold text-black dark:text-white">Theme</h3>
                                         <div className="w-2 h-2 bg-gradient-to-r from-blue-400 to-purple-500 rounded-full"></div>
                                     </div>
 
