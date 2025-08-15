@@ -71,7 +71,11 @@ const Sidebar = ({ open, setOpen }) => {
                     height: 'calc(100vh - 57px)'
                 }}
             >
-                <div className="h-full glass-card border-r border-white/20 dark:border-white/10 rounded-none flex flex-col" style={{ borderRadius: '0' }}>
+                <div className={`
+                    h-full border-r border-white/20 dark:border-white/10 rounded-none flex flex-col
+                    ${open ? 'glass-card' : ''}
+                    lg:bg-white dark:lg:bg-black
+                `} style={{ borderRadius: '0' }}>
                     {/* Close button for mobile */}
                     <div className="lg:hidden flex justify-end p-4 flex-shrink-0">
                         <button
@@ -101,9 +105,11 @@ const Sidebar = ({ open, setOpen }) => {
                                     >
                                         <Icon className={`w-5 h-5 mr-3 transition-colors ${active
                                             ? 'text-white'
-                                            : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
+                                            : open
+                                                ? 'text-black dark:text-gray-400'
+                                                : 'text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-200'
                                             }`} />
-                                        <span className="font-medium">{item.label}</span>
+                                        <span className={`font-medium ${open ? 'text-black dark:text-gray-400' : ''}`}>{item.label}</span>
                                     </NavLink>
                                 )
                             })}
@@ -111,7 +117,7 @@ const Sidebar = ({ open, setOpen }) => {
 
                         {/* Quick Actions */}
                         <div className="mt-8">
-                            <h3 className="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                            <h3 className={`px-4 text-xs font-semibold uppercase tracking-wider mb-3 ${open ? 'text-black dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                 Quick Actions
                             </h3>
                             <div className="space-y-2">
@@ -119,24 +125,30 @@ const Sidebar = ({ open, setOpen }) => {
                                     onClick={() => setShowAddModal(true)}
                                     className="nav-item w-full text-left group hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                                 >
-                                    <Plus className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors" />
-                                    <span className="font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">Add Video</span>
+                                    <Plus className={`w-5 h-5 mr-3 transition-colors ${open
+                                        ? 'text-black dark:text-gray-400'
+                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400'}`} />
+                                    <span className={`font-medium group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors ${open ? 'text-black dark:text-gray-400' : ''}`}>Add Video</span>
                                 </button>
 
                                 <button
                                     onClick={handleFavoritesClick}
                                     className="nav-item w-full text-left group"
                                 >
-                                    <Star className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-yellow-500 transition-colors" />
-                                    <span className="font-medium">Favorites</span>
+                                    <Star className={`w-5 h-5 mr-3 transition-colors ${open
+                                        ? 'text-black dark:text-gray-400'
+                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-yellow-500'}`} />
+                                    <span className={`font-medium ${open ? 'text-black dark:text-gray-400' : ''}`}>Favorites</span>
                                 </button>
 
                                 <button
                                     onClick={handleWatchLaterClick}
                                     className="nav-item w-full text-left group"
                                 >
-                                    <Clock className="w-5 h-5 mr-3 text-gray-500 dark:text-gray-400 group-hover:text-blue-500 transition-colors" />
-                                    <span className="font-medium">Watch Later</span>
+                                    <Clock className={`w-5 h-5 mr-3 transition-colors ${open
+                                        ? 'text-black dark:text-gray-400'
+                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-blue-500'}`} />
+                                    <span className={`font-medium ${open ? 'text-black dark:text-gray-400' : ''}`}>Watch Later</span>
                                 </button>
                             </div>
                         </div>
@@ -144,7 +156,7 @@ const Sidebar = ({ open, setOpen }) => {
                         {/* Categories */}
                         {categories.length > 0 && (
                             <div className="mt-8">
-                                <h3 className="px-4 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">
+                                <h3 className={`px-4 text-xs font-semibold uppercase tracking-wider mb-3 ${open ? 'text-black dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                     Categories
                                 </h3>
                                 <div className="space-y-1 max-h-48 overflow-y-auto">
@@ -154,11 +166,10 @@ const Sidebar = ({ open, setOpen }) => {
                                             navigate('/library')
                                             setOpen(false)
                                         }}
-                                        className={`nav-item w-full text-left ${selectedCategory === null ? 'bg-gray-100 dark:bg-gray-800' : ''
-                                            }`}
+                                        className={`nav-item w-full text-left ${selectedCategory === null ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
                                     >
                                         <span className="w-3 h-3 rounded-full bg-gray-400 mr-3"></span>
-                                        <span className="font-medium">All Videos</span>
+                                        <span className={`font-medium ${open ? 'text-black dark:text-gray-400' : ''}`}>All Videos</span>
                                     </button>
                                     {categories.map((category) => (
                                         <button
@@ -168,11 +179,10 @@ const Sidebar = ({ open, setOpen }) => {
                                                 navigate('/library')
                                                 setOpen(false)
                                             }}
-                                            className={`nav-item w-full text-left ${selectedCategory === category ? 'bg-gray-100 dark:bg-gray-800' : ''
-                                                }`}
+                                            className={`nav-item w-full text-left ${selectedCategory === category ? 'bg-gray-100 dark:bg-gray-800' : ''}`}
                                         >
                                             <span className="w-3 h-3 rounded-full bg-indigo-400 mr-3"></span>
-                                            <span className="font-medium capitalize">{category}</span>
+                                            <span className={`font-medium capitalize ${open ? 'text-black dark:text-gray-400' : ''}`}>{category}</span>
                                         </button>
                                     ))}
                                 </div>
@@ -189,10 +199,10 @@ const Sidebar = ({ open, setOpen }) => {
                                 </span>
                             </div>
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                <p className={`text-sm font-medium truncate ${open ? 'text-black dark:text-gray-100' : 'text-gray-900 dark:text-gray-100'}`}>
                                     {user?.displayName || 'User'}
                                 </p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                <p className={`text-xs truncate ${open ? 'text-black dark:text-gray-400' : 'text-gray-500 dark:text-gray-400'}`}>
                                     Premium Member
                                 </p>
                             </div>
