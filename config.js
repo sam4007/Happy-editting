@@ -1,7 +1,7 @@
 // Configuration file for the application
 const config = {
     // API Configuration
-    API_BASE_URL: process.env.VITE_API_URL || 'http://localhost:5000/api',
+    API_BASE_URL: process.env.VITE_API_URL || 'https://lumiere-jndb.onrender.com',
 
     // YouTube API Configuration (for server-side use)
     YOUTUBE_API_KEY: process.env.YOUTUBE_API_KEY,
