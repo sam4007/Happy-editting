@@ -614,78 +614,7 @@ const Dashboard = () => {
                 </div>
             )}
 
-                {/* Experiment Card */}
-                <div className="mb-8">
-                    <div className="relative group">
-                        {/* Deep Purple-Indigo Background Effect */}
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/20 via-indigo-600/30 to-violet-700/40 opacity-0 group-hover:opacity-100 transition-all duration-700 ease-out blur-xl scale-110 group-hover:scale-100"></div>
-
-                        {/* Animated Purple Particles */}
-                        <div className="absolute inset-0 rounded-2xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-700">
-                            <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-purple-400 rounded-full animate-pulse group-hover:animate-bounce"></div>
-                            <div className="absolute top-1/3 right-1/3 w-1 h-1 bg-indigo-400 rounded-full animate-pulse group-hover:animate-bounce delay-100"></div>
-                            <div className="absolute bottom-1/3 left-1/3 w-1.5 h-1.5 bg-violet-400 rounded-full animate-pulse group-hover:animate-bounce delay-200"></div>
-                            <div className="absolute top-1/2 right-1/4 w-1 h-1 bg-purple-300 rounded-full animate-pulse group-hover:animate-bounce delay-300"></div>
-                    </div>
-
-                        {/* Main Card */}
-                        <div className="relative glass-card-frosted p-8 overflow-hidden hover:scale-[1.02] hover:shadow-2xl transition-all duration-700 ease-out group-hover:bg-white/20 dark:group-hover:bg-gray-900/30 group-hover:backdrop-blur-xl">
-                            {/* Deep Purple-Indigo Glow Overlay on Hover */}
-                            <div className="absolute inset-0 bg-gradient-to-br from-purple-100/10 via-indigo-200/5 to-violet-100/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 rounded-2xl"></div>
-
-                            {/* Content */}
-                            <div className="relative z-10">
-                                <div className="flex items-center justify-between mb-6">
-                                    <div className="flex items-center space-x-3">
-                                        <div className="p-2 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 shadow-lg group-hover:shadow-purple-500/50 transition-all duration-300">
-                                            <div className="w-5 h-5 text-white font-bold text-sm group-hover:animate-pulse">🧪</div>
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors duration-300">Experiment</h3>
-                                            <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-300">
-                                                UI Design Testing Area
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-6">
-                                    {/* Experiment Content */}
-                                    <div className="text-center py-8">
-                                        <div className="text-4xl mb-4 group-hover:animate-pulse transition-all duration-300">🧪</div>
-                                        <h4 className="text-xl font-medium text-gray-900 dark:text-white mb-2 group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors duration-300">
-                                            UI Design Experiment
-                                        </h4>
-                                        <p className="text-gray-600 dark:text-gray-400 mb-6 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-300">
-                                            This is a temporary card for experimenting with different UI designs.
-                                        </p>
-
-                                        {/* Sample UI Elements for Testing */}
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                                            <div className="p-4 rounded-xl bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-200/20 dark:border-purple-700/20 group-hover:bg-gradient-to-br group-hover:from-purple-500/20 group-hover:to-indigo-500/20 group-hover:border-purple-300/30 dark:group-hover:border-purple-600/30 transition-all duration-500">
-                                                <h5 className="font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors duration-300">Sample Element 1</h5>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-300">Test different styles here</p>
-                                            </div>
-                                            <div className="p-4 rounded-xl bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border border-indigo-200/20 dark:border-indigo-700/20 group-hover:bg-gradient-to-br group-hover:from-indigo-500/20 group-hover:to-violet-500/20 group-hover:border-indigo-300/30 dark:group-hover:border-indigo-600/30 transition-all duration-500">
-                                                <h5 className="font-semibold text-gray-900 dark:text-white mb-2 group-hover:text-purple-800 dark:group-hover:text-purple-200 transition-colors duration-300">Sample Element 2</h5>
-                                                <p className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-300 transition-colors duration-300">Experiment with colors</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex justify-center space-x-4">
-                                            <button className="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg group-hover:shadow-purple-500/50">
-                                                Test Button 1
-                                            </button>
-                                            <button className="px-6 py-3 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-600 hover:to-violet-700 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg group-hover:shadow-purple-500/50">
-                                                Test Button 2
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
